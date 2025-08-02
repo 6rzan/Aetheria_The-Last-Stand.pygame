@@ -1,0 +1,48 @@
+import pygame
+import random
+from settings import *
+
+class Particle(pygame.sprite.Sprite):
+    def __init__(self, x, y, color, lifetime):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.color = color
+        self.lifetime = lifetime
+        self.size = random.randint(2, 5)
+        self.image = pygame.Surface((self.size, self.size))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        self.vx = random.uniform(-2, 2)
+        self.vy = random.uniform(-2, 2)
+
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.rect.center = (self.x, self.y)
+        self.lifetime -= 1
+        if self.lifetime <= 0:
+            self.kill()
+
+def create_explosion(x, y, particles_group):
+    for _ in range(20):
+        color = random.choice([ORANGE, YELLOW])
+        particle = Particle(x, y, color, random.randint(20, 40))
+        particles_group.add(particle)
+
+def create_dissolve_effect(x, y, particles_group):
+    for _ in range(15):
+        particle = Particle(x, y, GREY, random.randint(10, 30))
+        particles_group.add(particle)
+
+def create_frost_effect(x, y, particles_group):
+    for _ in range(15):
+        color = random.choice([LIGHT_BLUE, WHITE])
+        particle = Particle(x, y, color, random.randint(15, 35))
+        particles_group.add(particle)
+
+def create_storm_effect(x, y, particles_group):
+    for _ in range(15):
+        color = random.choice([PURPLE, YELLOW])
+        particle = Particle(x, y, color, random.randint(20, 40))
+        particles_group.add(particle)
