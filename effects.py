@@ -42,7 +42,11 @@ def create_frost_effect(x, y, particles_group):
         particles_group.add(particle)
 
 def create_storm_effect(x, y, particles_group):
-    for _ in range(15):
-        color = random.choice([PURPLE, YELLOW])
-        particle = Particle(x, y, color, random.randint(20, 40))
+    # Lightning sparks
+    for _ in range(10):
+        color = random.choice([WHITE, YELLOW])
+        particle = Particle(x, y, color, random.randint(10, 20))
+        particle.vx = random.uniform(-4, 4)
+        particle.vy = random.uniform(-4, 4)
+        particle.size = random.randint(1, 3)
         particles_group.add(particle)

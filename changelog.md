@@ -93,3 +93,26 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **Files:** `settings.py`, `effects.py`, `towers.py`
 - **Change:** Based on final feedback, the Storm Spire was tuned to be less overwhelming. Damage was lowered, the AOE radius was reduced to a more balanced size, the particle count was decreased, and the pulse animation was slowed down.
 - **Outcome:** The Storm Spire is now a balanced and visually pleasing AOE tower.
+
+### 5. Final Polish and VFX Overhaul
+- **Files:** `settings.py`, `effects.py`, `towers.py`
+- **Changes:**
+    - Weakened the damage of both the Sunfire Spire and Storm Spire for better game balance.
+    - Completely overhauled the Storm Spire's visual effect to be a "chain lightning" attack. The pulsing circle was removed in favor of jagged lines of lightning that connect the primary target to all other enemies hit in the AOE.
+    - The storm particle effect was changed to be more like sparks to match the new lightning theme.
+- **Outcome:** The game is now balanced according to feedback, and the Storm Spire has a unique, thematic, and visually exciting attack.
+
+### 6. Final Damage Balancing
+- **File:** `settings.py`
+- **Change:** Performed one last damage reduction on the Sunfire Spire (20 -> 15) and Storm Spire (8 -> 6) to finalize game balance. (Update: Further reduced to Sunfire: 12, Storm: 5).
+- **Outcome:** Tower damage values are now finalized.
+
+### 7. Sunfire Spire Target Locking
+- **File:** `towers.py`
+- **Change:** Implemented a target-locking mechanism for the Sunfire Spire. It now overrides the default `update` method to lock onto a single target and will continue to attack it until it is defeated or moves out of range.
+- **Outcome:** The Sunfire Spire now behaves as a dedicated single-target eliminator, as requested.
+
+### 8. Storm Spire Final AOE Tuning
+- **File:** `settings.py`
+- **Change:** After confirming the AOE mechanic was working, the Storm Spire's damage and radius were tuned to a final, balanced state (Damage: 10, Radius: 90) to ensure the effect was noticeable without being overpowered.
+- **Outcome:** The Storm Spire's AOE attack is now functionally correct and balanced for gameplay.

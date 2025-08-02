@@ -54,6 +54,32 @@ class SunfireSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, SUNFIRE_SPIRE_COST, SUNFIRE_SPIRE_RANGE, SUNFIRE_SPIRE_DAMAGE, SUNFIRE_SPIRE_FIRE_RATE)
         self.image.fill(ORANGE)
+        self.locked_target = None
+
+    def update(self, enemies, projectiles, particles, screen):
+        # Sunfire Spire specific update for target locking
+        if self.vfx_timer > 0:
+            self.vfx_timer -= 1
+        else:
+            self.target = None
+
+        # Check if locked target is still valid
+        if self.locked_target and self.locked_target.alive():
+            dist = math.hypot(self.rect.centerx - self.locked_target.rect.centerx, self.rect.centery - self.locked_target.rect.centery)
+            if dist > self.range:
+                self.locked_target = None # Target out of range
+        else:
+            self.locked_target = None # Target is dead
+
+        # If no locked target, find a new one
+        if not self.locked_target:
+            self.locked_target = self.get_target(enemies)
+
+        # Attack logic
+        now = pygame.time.get_ticks()
+        if self.locked_target and now - self.last_shot_time > self.fire_rate:
+            self.last_shot_time = now
+            self.attack(self.locked_target, enemies, projectiles, particles, screen)
 
     def attack(self, target, enemies, projectiles, particles, screen):
         target.health -= self.damage
@@ -91,32 +117,60 @@ class StormSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, STORM_SPIRE_COST, STORM_SPIRE_RANGE, STORM_SPIRE_DAMAGE, STORM_SPIRE_FIRE_RATE)
         self.image.fill(PURPLE)
+        self.secondary_targets = []
 
     def attack(self, target, enemies, projectiles, particles, screen):
-        self.vfx_timer = 20 # Slower pulse
-        self.target = target  # Store target for VFX
+        self.vfx_timer = 15 # Lightning duration
+        self.target = target
+        self.secondary_targets.clear()
+
+        # Find all targets in AOE
         for enemy in list(enemies):
             if enemy.alive() and math.hypot(target.rect.centerx - enemy.rect.centerx, target.rect.centery - enemy.rect.centery) < STORM_SPIRE_AOE_RADIUS:
+                if enemy is not target:
+                    self.secondary_targets.append(enemy)
                 enemy.health -= self.damage
                 create_storm_effect(enemy.rect.centerx, enemy.rect.centery, particles)
 
     def draw_vfx(self, screen):
         if self.vfx_timer > 0 and self.target:
-            # Pulsing AOE effect
-            pulse_progress = self.vfx_timer / 20.0 # Match the new timer
-            
-            # Radius grows and then shrinks
-            current_radius = int(STORM_SPIRE_AOE_RADIUS * math.sin(pulse_progress * math.pi))
-            
-            # Alpha fades out
-            alpha = int(200 * (1 - (1-pulse_progress)**2))
+            # Draw main lightning bolt to primary target
+            self.draw_lightning_bolt(screen, self.rect.center, self.target.rect.center)
+            # Draw branching lightning to secondary targets
+            for secondary in self.secondary_targets:
+                if secondary.alive():
+                    self.draw_lightning_bolt(screen, self.target.rect.center, secondary.rect.center)
 
-            if current_radius > 0:
-                overlay = pygame.Surface((current_radius * 2, current_radius * 2), pygame.SRCALPHA)
-                
-                # Fill
-                pygame.draw.circle(overlay, (128, 0, 128, alpha), (current_radius, current_radius), current_radius)
-                # Border
-                pygame.draw.circle(overlay, (255, 255, 255, alpha), (current_radius, current_radius), current_radius, 3)
-                
-                screen.blit(overlay, (self.target.rect.centerx - current_radius, self.target.rect.centery - current_radius))
+    def draw_lightning_bolt(self, screen, start_pos, end_pos):
+        import random
+        points = []
+        points.append(start_pos)
+        
+        dx = end_pos[0] - start_pos[0]
+        dy = end_pos[1] - start_pos[1]
+        dist = math.hypot(dx, dy)
+        if dist == 0: return
+
+        num_segments = int(dist / 15)
+        if num_segments < 2: num_segments = 2
+
+        for i in range(1, num_segments):
+            progress = i / num_segments
+            pos = (start_pos[0] + dx * progress, start_pos[1] + dy * progress)
+            offset = random.uniform(-10, 10)
+            perp_dx = -dy / dist
+            perp_dy = dx / dist
+            points.append((pos[0] + offset * perp_dx, pos[1] + offset * perp_dy))
+        
+        points.append(end_pos)
+        
+        # Fade the lightning over its duration
+        alpha = int(255 * (self.vfx_timer / 15.0))
+        color = (255, 255, 255, alpha)
+        
+        if pygame.SRCALPHA:
+            temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            pygame.draw.aalines(temp_surface, color, False, points, 2)
+            screen.blit(temp_surface, (0,0))
+        else:
+            pygame.draw.aalines(screen, (255,255,255), False, points, 2)
