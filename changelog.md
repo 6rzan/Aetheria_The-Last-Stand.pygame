@@ -123,3 +123,8 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **File:** `main.py`
 - **Change:** Implemented a right-click cancellation feature. While holding a tower for placement, the user can now right-click to cancel the action, returning them to a neutral state without placing the tower.
 - **Outcome:** Improved user experience by providing an intuitive way to back out of a placement decision.
+
+### 2. Enhanced Placement Preview
+- **File:** `main.py`
+- **Change:** Overhauled the "ghost tower" preview. Instead of a simple red/green square, it now shows a pulsing, semi-transparent image of the selected tower in its correct color. Placement validity is now indicated by a colored circle drawn underneath the preview.
+- **Outcome:** Provides a much more intuitive and visually appealing placement experience.

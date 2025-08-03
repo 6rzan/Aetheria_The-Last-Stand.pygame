@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 from settings import *
 from levels import Level, LEVEL_1_MAP, LEVEL_2_MAP
 from towers import SunfireSpire, FrostSpire, StormSpire
@@ -131,17 +132,33 @@ class Game:
     def draw_ghost_tower(self):
         if self.selected_tower:
             mouse_pos = pygame.mouse.get_pos()
-            ghost_image = pygame.Surface((50,50), pygame.SRCALPHA)
             
-            color = (255,0,0) # Red for invalid
+            # 1. Determine Spire Color
+            spire_color_map = {
+                "sunfire": ORANGE,
+                "frost": LIGHT_BLUE,
+                "storm": PURPLE
+            }
+            base_color = spire_color_map.get(self.selected_tower, WHITE)
+
+            # 2. Determine Placement Validity
+            is_valid_spot = False
             for spot in self.level.tower_spots:
                  if pygame.Rect(spot[0]-25, spot[1]-25, 50, 50).collidepoint(mouse_pos):
-                    is_occupied = any(tower.rect.center == spot for tower in self.towers)
-                    if not is_occupied:
-                        color = (0,255,0) # Green for valid
+                    if not any(tower.rect.center == spot for tower in self.towers):
+                        is_valid_spot = True
                         break
             
-            ghost_image.fill((color[0], color[1], color[2], 128))
+            # 3. Create Pulsing Ghost Image
+            pulse = (math.sin(pygame.time.get_ticks() * 0.005) + 1) / 2 # 0 to 1 sine wave
+            alpha = 75 + (pulse * 100) # Pulsing alpha between 75 and 175
+            
+            ghost_image = pygame.Surface((50,50), pygame.SRCALPHA)
+            ghost_image.fill((base_color[0], base_color[1], base_color[2], alpha))
+            
+            # 4. Draw Validity Circle and Ghost Image
+            validity_color = GREEN if is_valid_spot else RED
+            pygame.draw.circle(self.screen, validity_color, mouse_pos, 30, 2)
             self.screen.blit(ghost_image, (mouse_pos[0] - 25, mouse_pos[1] - 25))
 
     def handle_mouse_click(self, pos):
