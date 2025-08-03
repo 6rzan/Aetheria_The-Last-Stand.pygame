@@ -93,3 +93,43 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **Files:** `settings.py`, `effects.py`, `towers.py`
 - **Change:** Based on final feedback, the Storm Spire was tuned to be less overwhelming. Damage was lowered, the AOE radius was reduced to a more balanced size, the particle count was decreased, and the pulse animation was slowed down.
 - **Outcome:** The Storm Spire is now a balanced and visually pleasing AOE tower.
+
+### 5. Final Polish and VFX Overhaul
+- **Files:** `settings.py`, `effects.py`, `towers.py`
+- **Changes:**
+    - Weakened the damage of both the Sunfire Spire and Storm Spire for better game balance.
+    - Completely overhauled the Storm Spire's visual effect to be a "chain lightning" attack. The pulsing circle was removed in favor of jagged lines of lightning that connect the primary target to all other enemies hit in the AOE.
+    - The storm particle effect was changed to be more like sparks to match the new lightning theme.
+- **Outcome:** The game is now balanced according to feedback, and the Storm Spire has a unique, thematic, and visually exciting attack.
+
+### 6. Final Damage Balancing
+- **File:** `settings.py`
+- **Change:** Performed one last damage reduction on the Sunfire Spire (20 -> 15) and Storm Spire (8 -> 6) to finalize game balance. (Update: Further reduced to Sunfire: 12, Storm: 5).
+- **Outcome:** Tower damage values are now finalized.
+
+### 7. Sunfire Spire Target Locking
+- **File:** `towers.py`
+- **Change:** Implemented a target-locking mechanism for the Sunfire Spire. It now overrides the default `update` method to lock onto a single target and will continue to attack it until it is defeated or moves out of range.
+- **Outcome:** The Sunfire Spire now behaves as a dedicated single-target eliminator, as requested.
+
+### 8. Storm Spire Final AOE Tuning
+- **File:** `settings.py`
+- **Change:** After confirming the AOE mechanic was working, the Storm Spire's damage and radius were tuned to a final, balanced state (Damage: 10, Radius: 90) to ensure the effect was noticeable without being overpowered.
+- **Outcome:** The Storm Spire's AOE attack is now functionally correct and balanced for gameplay.
+
+## Quality of Life Features
+
+### 1. Placement Cancellation
+- **File:** `main.py`
+- **Change:** Implemented a right-click cancellation feature. While holding a tower for placement, the user can now right-click to cancel the action, returning them to a neutral state without placing the tower.
+- **Outcome:** Improved user experience by providing an intuitive way to back out of a placement decision.
+
+### 2. Enhanced Placement Preview
+- **File:** `main.py`
+- **Change:** Overhauled the "ghost tower" preview. Instead of a simple red/green square, it now shows a pulsing, semi-transparent image of the selected tower in its correct color. Placement validity is now indicated by a colored circle drawn underneath the preview.
+- **Outcome:** Provides a much more intuitive and visually appealing placement experience.
+
+### 3. Crash Fix for Placement Preview
+- **Files:** `main.py`, `settings.py`
+- **Change:** Fixed a `NameError` crash that occurred when selecting a tower. The `RED` color constant was missing from `settings.py` and the wildcard import in `main.py` was replaced with an explicit import list to prevent similar issues.
+- **Outcome:** The game is now stable and no longer crashes upon selecting a tower.
