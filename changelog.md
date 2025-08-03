@@ -116,3 +116,10 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **File:** `settings.py`
 - **Change:** After confirming the AOE mechanic was working, the Storm Spire's damage and radius were tuned to a final, balanced state (Damage: 10, Radius: 90) to ensure the effect was noticeable without being overpowered.
 - **Outcome:** The Storm Spire's AOE attack is now functionally correct and balanced for gameplay.
+
+## Quality of Life Features
+
+### 1. Placement Cancellation
+- **File:** `main.py`
+- **Change:** Implemented a right-click cancellation feature. While holding a tower for placement, the user can now right-click to cancel the action, returning them to a neutral state without placing the tower.
+- **Outcome:** Improved user experience by providing an intuitive way to back out of a placement decision.
