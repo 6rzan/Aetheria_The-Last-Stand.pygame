@@ -18,8 +18,10 @@ class Tower(pygame.sprite.Sprite):
         self.projectiles = pygame.sprite.Group()
         self.vfx_timer = 0
         self.vfx_duration = 0
+        self.slow_effect_timer = 0
+        self.disable_timer = 0
 
-    def update(self, enemies, projectiles, particles, screen):
+    def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # VFX update
         if self.vfx_timer > 0:
             self.vfx_timer -= 1
@@ -27,18 +29,35 @@ class Tower(pygame.sprite.Sprite):
             if hasattr(self, 'target') and self.target:
                 self.target = None
 
+        # Handle disable effect
+        if self.disable_timer > 0:
+            self.disable_timer -= 1
+            # The visual effect is now handled in draw_vfx
+            return # Do not attack if disabled
+
+        # Handle slow effect
+        current_fire_rate = self.fire_rate
+        if self.slow_effect_timer > 0:
+            self.slow_effect_timer -= 1
+            current_fire_rate *= (1 / CHRONO_WARPER_SLOW_FACTOR)
+
         # Attack logic
         now = pygame.time.get_ticks()
-        if now - self.last_shot_time > self.fire_rate:
+        if now - self.last_shot_time > current_fire_rate:
             self.last_shot_time = now
             self.target = self.get_target(enemies)
             if self.target:
-                self.attack(self.target, enemies, projectiles, particles, screen)
+                self.attack(self.target, enemies, projectiles, particles, screen, damage_multiplier)
 
         self.projectiles.update()
     
     def draw_vfx(self, screen):
-        pass # To be implemented by subclasses
+        # Draw disable effect if active
+        if self.disable_timer > 0:
+            disable_surface = pygame.Surface((50, 50), pygame.SRCALPHA)
+            pygame.draw.line(disable_surface, (255, 0, 0, 200), (0, 0), (50, 50), 5)
+            pygame.draw.line(disable_surface, (255, 0, 0, 200), (50, 0), (0, 50), 5)
+            screen.blit(disable_surface, self.rect.topleft)
 
     def get_target(self, enemies):
         closest_enemy = None
@@ -56,7 +75,7 @@ class SunfireSpire(Tower):
         self.image.fill(ORANGE)
         self.locked_target = None
 
-    def update(self, enemies, projectiles, particles, screen):
+    def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # Sunfire Spire specific update for target locking
         if self.vfx_timer > 0:
             self.vfx_timer -= 1
@@ -79,15 +98,16 @@ class SunfireSpire(Tower):
         now = pygame.time.get_ticks()
         if self.locked_target and now - self.last_shot_time > self.fire_rate:
             self.last_shot_time = now
-            self.attack(self.locked_target, enemies, projectiles, particles, screen)
+            self.attack(self.locked_target, enemies, projectiles, particles, screen, damage_multiplier)
 
-    def attack(self, target, enemies, projectiles, particles, screen):
-        target.health -= self.damage
+    def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        target.take_damage(self.damage * damage_multiplier, self)
         create_explosion(target.rect.centerx, target.rect.centery, particles)
         self.vfx_timer = 15 # Longer beam
         self.target = target
 
     def draw_vfx(self, screen):
+        super().draw_vfx(screen)
         if self.vfx_timer > 0 and self.target:
             pygame.draw.line(screen, ORANGE, self.rect.center, self.target.rect.center, 3)
 
@@ -96,7 +116,7 @@ class FrostSpire(Tower):
         super().__init__(pos, FROST_SPIRE_COST, FROST_SPIRE_RANGE, FROST_SPIRE_DAMAGE, FROST_SPIRE_FIRE_RATE)
         self.image.fill(LIGHT_BLUE)
 
-    def attack(self, target, enemies, projectiles, particles, screen):
+    def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # No damage, only slow
         target.speed = target.original_speed * FROST_SPIRE_SLOW_FACTOR
         target.slow_timer = FROST_SPIRE_SLOW_DURATION
@@ -106,6 +126,7 @@ class FrostSpire(Tower):
         self.target = target
 
     def draw_vfx(self, screen):
+        super().draw_vfx(screen)
         if self.vfx_timer > 0 and self.target:
             # Draw a frozen area circle instead of a beam
             radius = 30
@@ -119,7 +140,7 @@ class StormSpire(Tower):
         self.image.fill(PURPLE)
         self.secondary_targets = []
 
-    def attack(self, target, enemies, projectiles, particles, screen):
+    def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         self.vfx_timer = 15 # Lightning duration
         self.target = target
         self.secondary_targets.clear()
@@ -129,10 +150,11 @@ class StormSpire(Tower):
             if enemy.alive() and math.hypot(target.rect.centerx - enemy.rect.centerx, target.rect.centery - enemy.rect.centery) < STORM_SPIRE_AOE_RADIUS:
                 if enemy is not target:
                     self.secondary_targets.append(enemy)
-                enemy.health -= self.damage
+                enemy.take_damage(self.damage * damage_multiplier, self)
                 create_storm_effect(enemy.rect.centerx, enemy.rect.centery, particles)
 
     def draw_vfx(self, screen):
+        super().draw_vfx(screen)
         if self.vfx_timer > 0 and self.target:
             # Draw main lightning bolt to primary target
             self.draw_lightning_bolt(screen, self.rect.center, self.target.rect.center)

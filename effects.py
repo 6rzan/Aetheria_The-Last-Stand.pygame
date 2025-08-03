@@ -50,3 +50,12 @@ def create_storm_effect(x, y, particles_group):
         particle.vy = random.uniform(-4, 4)
         particle.size = random.randint(1, 3)
         particles_group.add(particle)
+
+def create_aoe_explosion(x, y, particles_group):
+    # A bigger, more impactful explosion
+    for _ in range(50):
+        color = random.choice([RED, ORANGE, YELLOW])
+        particle = Particle(x, y, color, random.randint(30, 60))
+        particle.vx = random.uniform(-5, 5)
+        particle.vy = random.uniform(-5, 5)
+        particles_group.add(particle)

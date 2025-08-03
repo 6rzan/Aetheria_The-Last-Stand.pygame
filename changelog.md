@@ -133,3 +133,100 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **Files:** `main.py`, `settings.py`
 - **Change:** Fixed a `NameError` crash that occurred when selecting a tower. The `RED` color constant was missing from `settings.py` and the wildcard import in `main.py` was replaced with an explicit import list to prevent similar issues.
 - **Outcome:** The game is now stable and no longer crashes upon selecting a tower.
+
+## Dynamic Difficulty and Rewards System
+
+This major feature overhaul introduces a comprehensive system for dynamic difficulty scaling and strategic player rewards, creating a more engaging and challenging gameplay loop.
+
+### 1. New Enemy Archetypes
+- **File:** `enemies.py`, `settings.py`, `towers.py`
+- **Change:** Introduced three new enemy archetypes with unique abilities:
+    - **Shielding Sentinel:** Blocks a fixed amount of damage with a regenerating shield.
+    - **Chrono-Warper:** Periodically emits a pulse that slows the attack speed of nearby towers.
+    - **Saboteur:** Disables the tower that delivers the killing blow for a short duration.
+- **Outcome:** Increased strategic depth and enemy variety.
+
+### 2. Dynamic Wave Generation
+- **Files:** `waves.py`, `main.py`
+- **Change:** Replaced the simple wave spawning logic with a `WaveManager` class. This new system dynamically generates waves with an escalating number and variety of enemies, introducing the new archetypes at predefined wave milestones.
+- **Outcome:** A more structured and progressively challenging wave experience.
+
+### 3. Dual-Currency Economy
+- **File:** `main.py`, `enemies.py`
+- **Change:** Implemented a dual-currency system:
+    - **Shards (Temporary):** Earned by defeating enemies, used for in-run tactical abilities.
+    - **Aetherium (Permanent):** Awarded for surviving waves, intended for future meta-progression.
+- **Outcome:** Creates a framework for both immediate tactical decisions and long-term player progression.
+
+### 4. Barricade System
+- **Files:** `structures.py`, `levels.py`, `main.py`, `enemies.py`
+- **Change:** Added a deployable barricade system. Players can spend temporary currency to place barricades on predefined hardpoints. Enemies will now stop and attack barricades that block their path.
+- **Outcome:** Introduces a new layer of strategic map control and enemy pathing manipulation.
+
+### 5. In-Run Tactical Abilities
+- **Files:** `main.py`, `settings.py`, `effects.py`, `towers.py`
+- **Change:** Added two powerful, single-use abilities purchasable with temporary currency:
+    - **Weapon Overcharge:** Temporarily doubles the damage of all towers.
+    - **AOE Attack:** Allows the player to trigger a large, high-damage explosion anywhere on the map.
+- **Outcome:** Provides players with reactive tools to handle difficult situations.
+
+### 6. Meta-Progression Framework
+- **File:** `main.py`
+- **Change:** Implemented the foundational framework for meta-progression. The game now features a main menu, and permanent currency is saved to a `savegame.json` file between runs.
+- **Outcome:** Creates a persistent gameplay loop where players can accumulate currency for future unlocks.
+
+## Gameplay and UI Refactoring
+
+This pass focused on implementing new core gameplay mechanics and improving the user experience based on detailed requirements.
+
+### 1. Purchasable Spire Plots
+- **Files:** `main.py`, `levels.py`, `structures.py`, `settings.py`
+- **Change:** Overhauled the tower placement system. Players no longer have fixed spots but start with a few initial "Spire Plots." They can now purchase additional plots from the shop using permanent currency and place them on predefined strategic locations, expanding their defensive options.
+- **Outcome:** Adds a new strategic layer to the game, making map control and resource management more critical.
+
+### 2. UI Enhancements
+- **Files:** `main.py`, `structures.py`
+- **Changes:**
+    - **Enlarged Shop:** The shop UI panel was widened to prevent text from being cut off, ensuring all item names and costs are clearly legible.
+    - **Barricade Visibility:** The barricade sprite was updated with a high-contrast yellow border to make it easily distinguishable from the game path.
+- **Outcome:** Improved UI clarity and a better user experience.
+
+### 3. Critical Crash Fix
+- **File:** `enemies.py`
+- **Change:** Resolved a `TypeError` that occurred when the game updated enemies. The `update` methods for the new enemy archetypes had inconsistent arguments compared to the base `Enemy` class. The method signatures were synchronized to fix the crash.
+- **Outcome:** The game is now stable and runs without crashing when new enemy types are present.
+
+### 4. Controls and Resizing
+- **File:** `main.py`
+- **Changes:**
+    - **Resizable Window:** The game window is now fully resizable. UI elements in the shop panel are now positioned relative to the screen size.
+    - **Purchasing Bug Fix:** Corrected a bug where the clickable areas for the UI buttons did not match their visual location after the shop panel was resized, making it impossible to purchase multiple items.
+- **Outcome:** A more flexible display and corrected control scheme.
+
+## Economy Refactor and UI Polish
+
+This pass completely overhauls the in-game economy to focus on a single-level, wave-based loop and adds dynamic UI feedback.
+
+### 1. System Isolation
+- **File:** `main.py`
+- **Change:** The meta-progression save/load system has been temporarily commented out to support a single-level gameplay experience. The game now starts with a fixed amount of permanent currency and the main menu has been restored.
+- **Outcome:** The game is now a self-contained, single-run experience with a clear starting point.
+
+### 2. Two-Tier Currency System
+- **File:** `main.py`
+- **Change:** The economy was refactored into two distinct types:
+    - **Permanent Currency:** Persists between waves, used for major purchases like towers and plots.
+    - **Temporary Currency:** Earned from kills within a wave and spent on tactical abilities.
+- **Outcome:** Creates a more engaging economic loop with both strategic and tactical spending decisions.
+
+### 3. End-of-Wave Economic Cycle
+- **File:** `main.py`
+- **Change:** At the end of each wave, all remaining temporary currency is converted into permanent currency. A bonus is awarded for not taking damage, and a penalty is applied if damage was taken. The temporary currency is then reset to zero.
+- **Outcome:** Rewards skillful play and provides a clear economic cycle for each wave.
+
+### 4. Dynamic Currency UI
+- **File:** `main.py`
+- **Changes:**
+    - **Gain/Loss Feedback:** The currency display in the HUD now briefly flashes green for gains and orange for spends.
+    - **Affordability Indicator:** The price text for items in the shop now turns red if the player cannot afford them, providing clear, immediate feedback.
+- **Outcome:** A more responsive and intuitive user interface.
