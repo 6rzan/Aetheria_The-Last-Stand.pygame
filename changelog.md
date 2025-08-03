@@ -69,3 +69,20 @@ This update refines the core gameplay loop by implementing a strategic dual-curr
 ### Changed
 - **Economic Flow:** The entire in-game economy was refactored to use the new dual-currency system. Tower and plot costs were mapped to Permanent Currency, while tactical abilities were mapped to Volatile Currency.
 - **End-of-Wave Cycle:** The end-of-wave bonus logic was simplified to a flat conversion ratio of Volatile to Permanent currency, defined in `settings.py`.
+
+## [YYYY-MM-DD] - Gameplay Polish and Bug Fixing
+
+This update addresses user feedback on core mechanics and fixes several bugs related to gameplay interaction.
+
+### Added
+- **Barricade Duration:** Barricades are no longer permanent structures. They now have a limited lifetime, defined by `BARRICADE_DURATION` in `settings.py`, and will self-destruct when their time expires.
+
+### Changed
+- **Storm Spire Rework:**
+  - **True AOE Attack:** The Storm Spire's attack logic was completely overhauled. It now damages all enemies within its attack range simultaneously, functioning as a true Area of Effect tower.
+  - **VFX Reverted:** The visual effect was changed from a pulsing energy circle back to the user-preferred "chain lightning" effect. The new VFX correctly draws lightning from the tower to all enemies hit by the AOE attack.
+
+### Fixed
+- **Spire Plot Reusability:** Fixed a critical bug where selling a tower would not free up the Spire Plot it was built on. Plots are now correctly marked as unoccupied, allowing a new tower to be built in the same location.
+- **Placement Preview:** Fixed a major bug where the placement preview (the "ghost tower") used incorrect coordinates, making it impossible to place towers or other structures on certain levels. The preview now correctly uses map-relative coordinates, ensuring placement is accurate on all maps.
+- **Storm Spire VFX Animation:** Fixed a bug where the Storm Spire's AOE visual effect would not animate because its `vfx_timer` was not being decremented.

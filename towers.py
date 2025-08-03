@@ -175,35 +175,43 @@ class StormSpire(Tower):
         # self.image = pygame.image.load(assets.TOWER_STORM_SPIRE).convert_alpha()
         self.image = assets.get_placeholder_surface(50, 50, PURPLE)
         self.rect = self.image.get_rect(center=pos)
-        self.secondary_targets = []
+        self.targets_hit = []
         # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
         self.fire_sound = None
 
+    def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        # VFX update
+        if self.vfx_timer > 0:
+            self.vfx_timer -= 1
+
+        # Storm Spire doesn't need a single target, it attacks all in range.
+        now = pygame.time.get_ticks()
+        if now - self.last_shot_time > self.fire_rate:
+            self.last_shot_time = now
+            # Check if any enemy is in range to justify an attack
+            if self.get_target(enemies):
+                self.attack(None, enemies, projectiles, particles, screen, damage_multiplier)
+
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         self.vfx_timer = 15 # Lightning duration
-        self.target = target
-        self.secondary_targets.clear()
+        self.targets_hit.clear()
 
         if self.fire_sound:
             self.fire_sound.play()
 
-        # Find all targets in AOE
+        # Find all targets in range and damage them
         for enemy in list(enemies):
-            if enemy.alive() and math.hypot(target.rect.centerx - enemy.rect.centerx, target.rect.centery - enemy.rect.centery) < STORM_SPIRE_AOE_RADIUS:
-                if enemy is not target:
-                    self.secondary_targets.append(enemy)
+            if enemy.alive() and math.hypot(self.rect.centerx - enemy.rect.centerx, self.rect.centery - enemy.rect.centery) < self.range:
                 enemy.take_damage(self.damage * damage_multiplier, self)
+                self.targets_hit.append(enemy)
                 create_storm_effect(enemy.rect.centerx, enemy.rect.centery, particles)
 
     def draw_vfx(self, surface, offset, overcharge_timer=0):
         super().draw_vfx(surface, offset, overcharge_timer)
-        if self.vfx_timer > 0 and self.target:
-            # Draw main lightning bolt to primary target
-            self.draw_lightning_bolt(surface, self.rect.center, self.target.rect.center, offset)
-            # Draw branching lightning to secondary targets
-            for secondary in self.secondary_targets:
-                if secondary.alive():
-                    self.draw_lightning_bolt(surface, self.target.rect.center, secondary.rect.center, offset)
+        if self.vfx_timer > 0:
+            for target in self.targets_hit:
+                if target.alive():
+                    self.draw_lightning_bolt(surface, self.rect.center, target.rect.center, offset)
 
     def draw_lightning_bolt(self, surface, start_pos, end_pos, offset):
         import random

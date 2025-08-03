@@ -142,6 +142,7 @@ class Game:
         self.enemies.update(self.particles, self.barricades, self.enemies)
         self.towers.update(self.enemies, self.projectiles, self.particles, self.screen, damage_multiplier)
         self.particles.update()
+        self.barricades.update()
         
         self.handle_wave_spawning()
         self.check_collisions()
@@ -379,13 +380,19 @@ class Game:
     def draw_ghost_tower(self):
         mouse_pos = pygame.mouse.get_pos()
         
+        # Adjust mouse position for camera offset to get map coordinates
+        map_width, map_height = self.level.width, self.level.height
+        offset_x = (self.screen.get_width() - map_width) // 2
+        offset_y = (self.screen.get_height() - map_height) // 2
+        map_pos = (mouse_pos[0] - offset_x, mouse_pos[1] - offset_y)
+
         if self.selected_tower:
             spire_color_map = { "sunfire": ORANGE, "frost": LIGHT_BLUE, "storm": PURPLE }
             base_color = spire_color_map.get(self.selected_tower, WHITE)
             
             is_valid_spot = False
             for plot in self.spire_plots:
-                if not plot.is_occupied and plot.rect.collidepoint(mouse_pos):
+                if not plot.is_occupied and plot.rect.collidepoint(map_pos):
                     is_valid_spot = True
                     break
             
@@ -401,7 +408,7 @@ class Game:
         elif self.placing_barricade:
             is_valid_spot = False
             for spot in self.level.barricade_spots:
-                if pygame.Rect(spot[0]-20, spot[1]-20, 40, 40).collidepoint(mouse_pos):
+                if pygame.Rect(spot[0]-20, spot[1]-20, 40, 40).collidepoint(map_pos):
                     if not any(b.rect.center == spot for b in self.barricades):
                         is_valid_spot = True
                         break
@@ -415,7 +422,7 @@ class Game:
         elif self.placing_plot:
             is_valid_spot = False
             for spot in self.level.purchasable_tower_spots:
-                if pygame.Rect(spot[0]-25, spot[1]-25, 50, 50).collidepoint(mouse_pos):
+                if pygame.Rect(spot[0]-25, spot[1]-25, 50, 50).collidepoint(map_pos):
                     if not any(p.rect.center == spot for p in self.spire_plots):
                         is_valid_spot = True
                         break
@@ -456,6 +463,11 @@ class Game:
             elif sell_button_rect.collidepoint(pos):
                 clicked_ui = True
                 self.meta_currency += int(self.selected_tower_instance.cost * 0.65)
+                # Find the plot this tower was on and mark it as unoccupied
+                for plot in self.spire_plots:
+                    if plot.pos == self.selected_tower_instance.pos:
+                        plot.is_occupied = False
+                        break
                 self.selected_tower_instance.kill()
                 self.selected_tower_instance = None
                 if self.ui_click_sound: self.ui_click_sound.play()

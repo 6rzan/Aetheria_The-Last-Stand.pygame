@@ -7,6 +7,7 @@ class Barricade(pygame.sprite.Sprite):
         self.pos = pos
         self.health = BARRICADE_HEALTH
         self.max_health = BARRICADE_HEALTH
+        self.lifetime = BARRICADE_DURATION
         self.image = pygame.Surface((40, 40), pygame.SRCALPHA)
         # Main block
         pygame.draw.rect(self.image, BROWN, (2, 2, 36, 36))
@@ -17,6 +18,11 @@ class Barricade(pygame.sprite.Sprite):
     def take_damage(self, amount):
         self.health -= amount
         if self.health <= 0:
+            self.kill()
+
+    def update(self):
+        self.lifetime -= 1
+        if self.lifetime <= 0:
             self.kill()
 
 class SpirePlot(pygame.sprite.Sprite):
