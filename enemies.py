@@ -1,9 +1,10 @@
 import pygame
+import assets
 from settings import *
 from effects import create_dissolve_effect
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, health, speed, value, path, color):
+    def __init__(self, health, speed, value, path):
         super().__init__()
         self.health = health
         self.max_health = health
@@ -13,19 +14,24 @@ class Enemy(pygame.sprite.Sprite):
         self.path = path
         self.path_index = 0
         self.pos = list(self.path[self.path_index])
-        self.original_color = color
-        self.image = pygame.Surface((30, 30)) # Placeholder
-        self.image.fill(self.original_color)
-        self.rect = self.image.get_rect(center=self.pos)
+        self.image = None # To be set by subclass
+        self.original_color = None
+        self.rect = pygame.Rect(self.pos[0] - 15, self.pos[1] - 15, 30, 30)
         self.slow_timer = 0
         self.last_hit_by = None
         self.attack_timer = 0
+        # self.hit_sound = pygame.mixer.Sound(assets.SFX_ENEMY_HIT)
+        self.hit_sound = None
+        # self.death_sound = pygame.mixer.Sound(assets.SFX_ENEMY_DEATH)
+        self.death_sound = None
 
     def take_damage(self, amount, tower):
+        if self.hit_sound:
+            self.hit_sound.play()
         self.health -= amount
         self.last_hit_by = tower
 
-    def update(self, particles, barricades):
+    def update(self, particles, barricades, all_enemies):
         # Death is now handled in the main game loop
 
         # Check for barricades
@@ -67,18 +73,35 @@ class Enemy(pygame.sprite.Sprite):
         else:
             # pygame.mixer.Sound('assets/heartcrystal_crack.wav').play()
             self.kill() # Reached the end of the path
+    
+    def kill(self):
+        if self.death_sound:
+            self.death_sound.play()
+        super().kill()
 
 class ShadowCrawler(Enemy):
     def __init__(self, path):
-        super().__init__(SHADOW_CRAWLER_HEALTH, SHADOW_CRAWLER_SPEED, SHADOW_CRAWLER_VALUE, path, GREY)
+        super().__init__(SHADOW_CRAWLER_HEALTH, SHADOW_CRAWLER_SPEED, SHADOW_CRAWLER_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_SHADOW_CRAWLER).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, GREY)
+        self.original_color = GREY
+        self.rect = self.image.get_rect(center=self.pos)
 
 class ShadowFlyer(Enemy):
     def __init__(self, path):
-        super().__init__(SHADOW_FLYER_HEALTH, SHADOW_FLYER_SPEED, SHADOW_FLYER_VALUE, path, WHITE)
+        super().__init__(SHADOW_FLYER_HEALTH, SHADOW_FLYER_SPEED, SHADOW_FLYER_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_SHADOW_FLYER).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, WHITE)
+        self.original_color = WHITE
+        self.rect = self.image.get_rect(center=self.pos)
 
 class ShieldingSentinel(Enemy):
     def __init__(self, path):
-        super().__init__(SHIELDING_SENTINEL_HEALTH, SHIELDING_SENTINEL_SPEED, SHIELDING_SENTINEL_VALUE, path, DARK_BLUE)
+        super().__init__(SHIELDING_SENTINEL_HEALTH, SHIELDING_SENTINEL_SPEED, SHIELDING_SENTINEL_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, DARK_BLUE)
+        self.original_color = DARK_BLUE # For shield effect
+        self.rect = self.image.get_rect(center=self.pos)
         self.shield = SHIELDING_SENTINEL_SHIELD
         self.max_shield = SHIELDING_SENTINEL_SHIELD
         self.shield_cooldown = 0
@@ -94,8 +117,8 @@ class ShieldingSentinel(Enemy):
         else:
             super().take_damage(amount, tower)
 
-    def update(self, particles, barricades):
-        super().update(particles, barricades)
+    def update(self, particles, barricades, all_enemies):
+        super().update(particles, barricades, all_enemies)
         if self.shield_cooldown > 0:
             self.shield_cooldown -= 1
         elif self.shield < self.max_shield:
@@ -112,12 +135,16 @@ class ShieldingSentinel(Enemy):
 
 class ChronoWarper(Enemy):
     def __init__(self, path):
-        super().__init__(CHRONO_WARPER_HEALTH, CHRONO_WARPER_SPEED, CHRONO_WARPER_VALUE, path, PURPLE)
+        super().__init__(CHRONO_WARPER_HEALTH, CHRONO_WARPER_SPEED, CHRONO_WARPER_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_CHRONO_WARPER).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, PURPLE)
+        self.original_color = PURPLE
+        self.rect = self.image.get_rect(center=self.pos)
         self.pulse_timer = CHRONO_WARPER_PULSE_RATE
         self.pulse_vfx_timer = 0
 
-    def update(self, particles, barricades):
-        super().update(particles, barricades)
+    def update(self, particles, barricades, all_enemies):
+        super().update(particles, barricades, all_enemies)
         if self.pulse_timer > 0:
             self.pulse_timer -= 1
         
@@ -133,9 +160,42 @@ class ChronoWarper(Enemy):
 
 class Saboteur(Enemy):
     def __init__(self, path):
-        super().__init__(SABOTEUR_HEALTH, SABOTEUR_SPEED, SABOTEUR_VALUE, path, BROWN)
+        super().__init__(SABOTEUR_HEALTH, SABOTEUR_SPEED, SABOTEUR_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_SABOTEUR).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, BROWN)
+        self.original_color = BROWN
+        self.rect = self.image.get_rect(center=self.pos)
 
     def kill(self):
         if self.last_hit_by:
             self.last_hit_by.disable_timer = SABOTEUR_DISABLE_DURATION
         super().kill()
+
+class Healer(Enemy):
+    def __init__(self, path):
+        super().__init__(HEALER_HEALTH, HEALER_SPEED, HEALER_VALUE, path)
+        # self.image = pygame.image.load(assets.ENEMY_HEALER).convert_alpha()
+        self.image = assets.get_placeholder_surface(30, 30, GREEN)
+        self.original_color = GREEN
+        self.rect = self.image.get_rect(center=self.pos)
+        self.heal_timer = HEALER_PULSE_RATE
+        self.heal_vfx_timer = 0
+
+    def update(self, particles, barricades, all_enemies):
+        super().update(particles, barricades, all_enemies)
+        if self.heal_timer > 0:
+            self.heal_timer -= 1
+        else:
+            self.heal_pulse(all_enemies)
+            self.heal_timer = HEALER_PULSE_RATE
+            self.heal_vfx_timer = FPS // 2
+        
+        if self.heal_vfx_timer > 0:
+            self.heal_vfx_timer -= 1
+
+    def heal_pulse(self, all_enemies):
+        for enemy in all_enemies:
+            if enemy is not self and enemy.alive():
+                dist = ( (self.rect.centerx - enemy.rect.centerx) ** 2 + (self.rect.centery - enemy.rect.centery) ** 2 ) ** 0.5
+                if dist <= HEALER_PULSE_RADIUS:
+                    enemy.health = min(enemy.max_health, enemy.health + HEALER_HEAL_AMOUNT)

@@ -1,9 +1,10 @@
 import random
-from enemies import ShadowCrawler, ShadowFlyer, ShieldingSentinel, ChronoWarper, Saboteur
+from enemies import ShadowCrawler, ShadowFlyer, ShieldingSentinel, ChronoWarper, Saboteur, Healer
 
 class WaveManager:
     def __init__(self, path):
         self.path = path
+        self.total_waves = 10
 
     def get_wave(self, wave_number):
         wave_enemies = []
@@ -22,6 +23,11 @@ class WaveManager:
             num_sentinels = (wave_number - 3) * 1
             for _ in range(num_sentinels):
                 wave_enemies.append(ShieldingSentinel(self.path))
+        
+        if wave_number >= 5:
+            num_healers = (wave_number - 4) // 2
+            for _ in range(num_healers):
+                wave_enemies.append(Healer(self.path))
 
         if wave_number >= 6:
             num_warpers = (wave_number - 5) * 1

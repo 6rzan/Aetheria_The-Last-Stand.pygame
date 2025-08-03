@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 import math
+import assets
 from effects import create_explosion, create_frost_effect, create_storm_effect
 
 
@@ -12,9 +13,11 @@ class Tower(pygame.sprite.Sprite):
         self.range = range
         self.damage = damage
         self.fire_rate = fire_rate
+        self.level = 1
+        self.upgrade_cost = int(cost * 1.5)
         self.last_shot_time = 0
-        self.image = pygame.Surface((50, 50)) # Placeholder
-        self.rect = self.image.get_rect(center=pos)
+        self.image = None # Will be set by subclasses
+        self.rect = pygame.Rect(pos[0] - 25, pos[1] - 25, 50, 50) # Default rect
         self.projectiles = pygame.sprite.Group()
         self.vfx_timer = 0
         self.vfx_duration = 0
@@ -51,13 +54,23 @@ class Tower(pygame.sprite.Sprite):
 
         self.projectiles.update()
     
-    def draw_vfx(self, screen):
+    def draw_vfx(self, surface, offset, overcharge_timer=0):
         # Draw disable effect if active
         if self.disable_timer > 0:
             disable_surface = pygame.Surface((50, 50), pygame.SRCALPHA)
             pygame.draw.line(disable_surface, (255, 0, 0, 200), (0, 0), (50, 50), 5)
             pygame.draw.line(disable_surface, (255, 0, 0, 200), (50, 0), (0, 50), 5)
-            screen.blit(disable_surface, self.rect.topleft)
+            surface.blit(disable_surface, (self.rect.left + offset[0], self.rect.top + offset[1]))
+
+        # Draw overcharge effect
+        if overcharge_timer > 0:
+            pulse = (math.sin(pygame.time.get_ticks() * 0.02) + 1) / 2 # 0 to 1
+            radius = self.rect.width // 2 + int(pulse * 5)
+            alpha = 50 + int(pulse * 100)
+            
+            overcharge_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+            pygame.draw.circle(overcharge_surface, (255, 255, 0, alpha), (radius, radius), radius)
+            surface.blit(overcharge_surface, (self.rect.centerx - radius + offset[0], self.rect.centery - radius + offset[1]))
 
     def get_target(self, enemies):
         closest_enemy = None
@@ -69,11 +82,22 @@ class Tower(pygame.sprite.Sprite):
                 closest_enemy = enemy
         return closest_enemy
 
+    def upgrade(self):
+        self.level += 1
+        self.damage = int(self.damage * 1.5)
+        self.range = int(self.range * 1.1)
+        self.cost += self.upgrade_cost
+        self.upgrade_cost = int(self.upgrade_cost * 1.5)
+
 class SunfireSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, SUNFIRE_SPIRE_COST, SUNFIRE_SPIRE_RANGE, SUNFIRE_SPIRE_DAMAGE, SUNFIRE_SPIRE_FIRE_RATE)
-        self.image.fill(ORANGE)
+        # self.image = pygame.image.load(assets.TOWER_SUNFIRE_SPIRE).convert_alpha()
+        self.image = assets.get_placeholder_surface(50, 50, ORANGE)
+        self.rect = self.image.get_rect(center=pos)
         self.locked_target = None
+        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_SUNFIRE)
+        self.fire_sound = None
 
     def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # Sunfire Spire specific update for target locking
@@ -101,22 +125,32 @@ class SunfireSpire(Tower):
             self.attack(self.locked_target, enemies, projectiles, particles, screen, damage_multiplier)
 
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        if self.fire_sound:
+            self.fire_sound.play()
         target.take_damage(self.damage * damage_multiplier, self)
         create_explosion(target.rect.centerx, target.rect.centery, particles)
         self.vfx_timer = 15 # Longer beam
         self.target = target
 
-    def draw_vfx(self, screen):
-        super().draw_vfx(screen)
+    def draw_vfx(self, surface, offset, overcharge_timer=0):
+        super().draw_vfx(surface, offset, overcharge_timer)
         if self.vfx_timer > 0 and self.target:
-            pygame.draw.line(screen, ORANGE, self.rect.center, self.target.rect.center, 3)
+            start_pos = (self.rect.centerx + offset[0], self.rect.centery + offset[1])
+            end_pos = (self.target.rect.centerx + offset[0], self.target.rect.centery + offset[1])
+            pygame.draw.line(surface, ORANGE, start_pos, end_pos, 3)
 
 class FrostSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, FROST_SPIRE_COST, FROST_SPIRE_RANGE, FROST_SPIRE_DAMAGE, FROST_SPIRE_FIRE_RATE)
-        self.image.fill(LIGHT_BLUE)
+        # self.image = pygame.image.load(assets.TOWER_FROST_SPIRE).convert_alpha()
+        self.image = assets.get_placeholder_surface(50, 50, LIGHT_BLUE)
+        self.rect = self.image.get_rect(center=pos)
+        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_FROST)
+        self.fire_sound = None
 
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        if self.fire_sound:
+            self.fire_sound.play()
         # No damage, only slow
         target.speed = target.original_speed * FROST_SPIRE_SLOW_FACTOR
         target.slow_timer = FROST_SPIRE_SLOW_DURATION
@@ -125,25 +159,33 @@ class FrostSpire(Tower):
         self.vfx_timer = 5 # Shorter beam duration
         self.target = target
 
-    def draw_vfx(self, screen):
-        super().draw_vfx(screen)
+    def draw_vfx(self, surface, offset, overcharge_timer=0):
+        super().draw_vfx(surface, offset, overcharge_timer)
         if self.vfx_timer > 0 and self.target:
             # Draw a frozen area circle instead of a beam
             radius = 30
             overlay = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
             pygame.draw.circle(overlay, (173, 216, 230, 75), (radius, radius), radius) # Light blue, semi-transparent
-            screen.blit(overlay, (self.target.rect.centerx - radius, self.target.rect.centery - radius))
+            draw_pos = (self.target.rect.centerx - radius + offset[0], self.target.rect.centery - radius + offset[1])
+            surface.blit(overlay, draw_pos)
 
 class StormSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, STORM_SPIRE_COST, STORM_SPIRE_RANGE, STORM_SPIRE_DAMAGE, STORM_SPIRE_FIRE_RATE)
-        self.image.fill(PURPLE)
+        # self.image = pygame.image.load(assets.TOWER_STORM_SPIRE).convert_alpha()
+        self.image = assets.get_placeholder_surface(50, 50, PURPLE)
+        self.rect = self.image.get_rect(center=pos)
         self.secondary_targets = []
+        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
+        self.fire_sound = None
 
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         self.vfx_timer = 15 # Lightning duration
         self.target = target
         self.secondary_targets.clear()
+
+        if self.fire_sound:
+            self.fire_sound.play()
 
         # Find all targets in AOE
         for enemy in list(enemies):
@@ -153,23 +195,27 @@ class StormSpire(Tower):
                 enemy.take_damage(self.damage * damage_multiplier, self)
                 create_storm_effect(enemy.rect.centerx, enemy.rect.centery, particles)
 
-    def draw_vfx(self, screen):
-        super().draw_vfx(screen)
+    def draw_vfx(self, surface, offset, overcharge_timer=0):
+        super().draw_vfx(surface, offset, overcharge_timer)
         if self.vfx_timer > 0 and self.target:
             # Draw main lightning bolt to primary target
-            self.draw_lightning_bolt(screen, self.rect.center, self.target.rect.center)
+            self.draw_lightning_bolt(surface, self.rect.center, self.target.rect.center, offset)
             # Draw branching lightning to secondary targets
             for secondary in self.secondary_targets:
                 if secondary.alive():
-                    self.draw_lightning_bolt(screen, self.target.rect.center, secondary.rect.center)
+                    self.draw_lightning_bolt(surface, self.target.rect.center, secondary.rect.center, offset)
 
-    def draw_lightning_bolt(self, screen, start_pos, end_pos):
+    def draw_lightning_bolt(self, surface, start_pos, end_pos, offset):
         import random
-        points = []
-        points.append(start_pos)
         
-        dx = end_pos[0] - start_pos[0]
-        dy = end_pos[1] - start_pos[1]
+        start = (start_pos[0] + offset[0], start_pos[1] + offset[1])
+        end = (end_pos[0] + offset[0], end_pos[1] + offset[1])
+
+        points = []
+        points.append(start)
+        
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
         dist = math.hypot(dx, dy)
         if dist == 0: return
 
@@ -178,21 +224,16 @@ class StormSpire(Tower):
 
         for i in range(1, num_segments):
             progress = i / num_segments
-            pos = (start_pos[0] + dx * progress, start_pos[1] + dy * progress)
-            offset = random.uniform(-10, 10)
+            pos = (start[0] + dx * progress, start[1] + dy * progress)
+            offset_val = random.uniform(-10, 10)
             perp_dx = -dy / dist
             perp_dy = dx / dist
-            points.append((pos[0] + offset * perp_dx, pos[1] + offset * perp_dy))
+            points.append((pos[0] + offset_val * perp_dx, pos[1] + offset_val * perp_dy))
         
-        points.append(end_pos)
+        points.append(end)
         
         # Fade the lightning over its duration
         alpha = int(255 * (self.vfx_timer / 15.0))
         color = (255, 255, 255, alpha)
         
-        if pygame.SRCALPHA:
-            temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-            pygame.draw.aalines(temp_surface, color, False, points, 2)
-            screen.blit(temp_surface, (0,0))
-        else:
-            pygame.draw.aalines(screen, (255,255,255), False, points, 2)
+        pygame.draw.aalines(surface, color, False, points, 2)

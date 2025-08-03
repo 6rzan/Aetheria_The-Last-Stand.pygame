@@ -17,6 +17,35 @@ LEVEL_2_MAP = {
     "background_colors": (DARK_BLUE, PURPLE)
 }
 
+LEVEL_3_MAP = {
+    "path": [(0, 50), (1280, 50)],
+    "initial_tower_spots": [(100, 150), (1180, 150)],
+    "purchasable_tower_spots": [(300, 150), (500, 150), (700, 150), (900, 150)],
+    "barricade_spots": [],
+    "background_colors": (BLACK, WHITE)
+}
+
+ALL_LEVELS = [
+    {
+        "name": "Level 1",
+        "difficulty": "Easy",
+        "starting_volatile_currency": 300,
+        "map_data": LEVEL_1_MAP
+    },
+    {
+        "name": "Level 2",
+        "difficulty": "Normal",
+        "starting_volatile_currency": 200,
+        "map_data": LEVEL_2_MAP
+    },
+    {
+        "name": "Level 3",
+        "difficulty": "Hard",
+        "starting_volatile_currency": 150,
+        "map_data": LEVEL_3_MAP
+    }
+]
+
 class Level:
     def __init__(self, level_data):
         self.path = level_data["path"]
@@ -24,12 +53,13 @@ class Level:
         self.purchasable_tower_spots = level_data["purchasable_tower_spots"]
         self.barricade_spots = level_data.get("barricade_spots", [])
         self.background_colors = level_data["background_colors"]
+        self.width = 1280 # Assuming fixed size for now
+        self.height = 720
 
-    def draw(self, screen):
-        screen.fill(self.background_colors[0])
-        # Draw a different color for the path area for contrast
+    def draw(self, screen, offset):
+        # The background will be drawn by the main game loop now
+        # to handle centering.
         for i in range(len(self.path) - 1):
-            pygame.draw.line(screen, self.background_colors[1], self.path[i], self.path[i+1], 40)
-        
-        # Draw tower spots (This will be handled by the SpirePlot sprites now)
-        pass
+            start_pos = (self.path[i][0] + offset[0], self.path[i][1] + offset[1])
+            end_pos = (self.path[i+1][0] + offset[0], self.path[i+1][1] + offset[1])
+            pygame.draw.line(screen, self.background_colors[1], start_pos, end_pos, 40)

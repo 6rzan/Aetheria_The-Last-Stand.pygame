@@ -1,1 +1,4 @@
-{"permanent_currency": 70}
+{
+    "meta_currency": 500,
+    "unlocks": []
+}

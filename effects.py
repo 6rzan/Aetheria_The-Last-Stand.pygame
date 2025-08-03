@@ -24,6 +24,36 @@ class Particle(pygame.sprite.Sprite):
         if self.lifetime <= 0:
             self.kill()
 
+class Shockwave(pygame.sprite.Sprite):
+    def __init__(self, x, y, max_radius, lifetime, color):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.max_radius = max_radius
+        self.lifetime = lifetime
+        self.start_lifetime = lifetime
+        self.color = color
+        self.current_radius = 0
+        self.image = pygame.Surface((self.max_radius * 2, self.max_radius * 2), pygame.SRCALPHA)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def update(self):
+        self.lifetime -= 1
+        if self.lifetime <= 0:
+            self.kill()
+            return
+
+        progress = 1 - (self.lifetime / self.start_lifetime)
+        self.current_radius = int(self.max_radius * progress)
+        
+        # Create a new surface each frame to handle changing alpha
+        self.image = pygame.Surface((self.max_radius * 2, self.max_radius * 2), pygame.SRCALPHA)
+        alpha = int(255 * (1 - progress))
+        
+        pygame.draw.circle(self.image, (*self.color, alpha), (self.max_radius, self.max_radius), self.current_radius, 3)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+
 def create_explosion(x, y, particles_group):
     for _ in range(20):
         color = random.choice([ORANGE, YELLOW])
@@ -59,3 +89,7 @@ def create_aoe_explosion(x, y, particles_group):
         particle.vx = random.uniform(-5, 5)
         particle.vy = random.uniform(-5, 5)
         particles_group.add(particle)
+    
+    # Add the shockwave
+    shockwave = Shockwave(x, y, AOE_ATTACK_RADIUS, 30, RED)
+    particles_group.add(shockwave)
