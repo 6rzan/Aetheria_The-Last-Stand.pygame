@@ -128,3 +128,8 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **File:** `main.py`
 - **Change:** Overhauled the "ghost tower" preview. Instead of a simple red/green square, it now shows a pulsing, semi-transparent image of the selected tower in its correct color. Placement validity is now indicated by a colored circle drawn underneath the preview.
 - **Outcome:** Provides a much more intuitive and visually appealing placement experience.
+
+### 3. Crash Fix for Placement Preview
+- **Files:** `main.py`, `settings.py`
+- **Change:** Fixed a `NameError` crash that occurred when selecting a tower. The `RED` color constant was missing from `settings.py` and the wildcard import in `main.py` was replaced with an explicit import list to prevent similar issues.
+- **Outcome:** The game is now stable and no longer crashes upon selecting a tower.
