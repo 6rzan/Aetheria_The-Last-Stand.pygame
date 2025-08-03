@@ -33,7 +33,11 @@ class Game:
                     running = False
                 if self.game_state == "playing":
                     if event.type == pygame.MOUSEBUTTONDOWN:
-                        self.handle_mouse_click(event.pos)
+                        if event.button == 1: # Left-click
+                            self.handle_mouse_click(event.pos)
+                        elif event.button == 3: # Right-click
+                            if self.selected_tower:
+                                self.selected_tower = None # Cancel selection
                 elif self.game_state in ["game_over", "win"]:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_r:
