@@ -116,3 +116,20 @@ Further user feedback prompted a final polish pass on tower visual effects and g
 - **File:** `settings.py`
 - **Change:** After confirming the AOE mechanic was working, the Storm Spire's damage and radius were tuned to a final, balanced state (Damage: 10, Radius: 90) to ensure the effect was noticeable without being overpowered.
 - **Outcome:** The Storm Spire's AOE attack is now functionally correct and balanced for gameplay.
+
+## Quality of Life Features
+
+### 1. Placement Cancellation
+- **File:** `main.py`
+- **Change:** Implemented a right-click cancellation feature. While holding a tower for placement, the user can now right-click to cancel the action, returning them to a neutral state without placing the tower.
+- **Outcome:** Improved user experience by providing an intuitive way to back out of a placement decision.
+
+### 2. Enhanced Placement Preview
+- **File:** `main.py`
+- **Change:** Overhauled the "ghost tower" preview. Instead of a simple red/green square, it now shows a pulsing, semi-transparent image of the selected tower in its correct color. Placement validity is now indicated by a colored circle drawn underneath the preview.
+- **Outcome:** Provides a much more intuitive and visually appealing placement experience.
+
+### 3. Crash Fix for Placement Preview
+- **Files:** `main.py`, `settings.py`
+- **Change:** Fixed a `NameError` crash that occurred when selecting a tower. The `RED` color constant was missing from `settings.py` and the wildcard import in `main.py` was replaced with an explicit import list to prevent similar issues.
+- **Outcome:** The game is now stable and no longer crashes upon selecting a tower.
