@@ -1,7 +1,7 @@
 import pygame
 import sys
 import math
-from settings import *
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, BLACK, WHITE, GREY, ORANGE, LIGHT_BLUE, PURPLE, RED, GREEN, SUNFIRE_SPIRE_COST, FROST_SPIRE_COST, STORM_SPIRE_COST
 from levels import Level, LEVEL_1_MAP, LEVEL_2_MAP
 from towers import SunfireSpire, FrostSpire, StormSpire
 from enemies import ShadowCrawler, ShadowFlyer
