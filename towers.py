@@ -17,7 +17,7 @@ class Tower(pygame.sprite.Sprite):
         self.upgrade_cost = int(cost * 1.5)
         self.last_shot_time = 0
         self.image = None # Will be set by subclasses
-        self.rect = pygame.Rect(pos[0] - 25, pos[1] - 25, 50, 50) # Default rect
+        self.rect = pygame.Rect(pos[0] - TOWER_SIZE[0] // 2, pos[1] - TOWER_SIZE[1] // 2, TOWER_SIZE[0], TOWER_SIZE[1])
         self.projectiles = pygame.sprite.Group()
         self.vfx_timer = 0
         self.vfx_duration = 0
@@ -92,9 +92,10 @@ class Tower(pygame.sprite.Sprite):
 class SunfireSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, SUNFIRE_SPIRE_COST, SUNFIRE_SPIRE_RANGE, SUNFIRE_SPIRE_DAMAGE, SUNFIRE_SPIRE_FIRE_RATE)
-        # self.image = pygame.image.load(assets.TOWER_SUNFIRE_SPIRE).convert_alpha()
-        self.image = assets.get_placeholder_surface(50, 50, ORANGE)
-        self.rect = self.image.get_rect(center=pos)
+        self.image = pygame.transform.scale(pygame.image.load(assets.TOWER_SUNFIRE_SPIRE).convert_alpha(), TOWER_SIZE)
+        # ADJUST TOWER PLACEMENT: Modify the 'y' value (pos[1]) to shift the tower up or down.
+        # Negative values move it up, positive values move it down.
+        self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
         self.locked_target = None
         # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_SUNFIRE)
         self.fire_sound = None
@@ -142,9 +143,9 @@ class SunfireSpire(Tower):
 class FrostSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, FROST_SPIRE_COST, FROST_SPIRE_RANGE, FROST_SPIRE_DAMAGE, FROST_SPIRE_FIRE_RATE)
-        # self.image = pygame.image.load(assets.TOWER_FROST_SPIRE).convert_alpha()
-        self.image = assets.get_placeholder_surface(50, 50, LIGHT_BLUE)
-        self.rect = self.image.get_rect(center=pos)
+        self.image = pygame.transform.scale(pygame.image.load(assets.TOWER_FROST_SPIRE).convert_alpha(), TOWER_SIZE)
+        # ADJUST TOWER PLACEMENT: Modify the 'y' value (pos[1]) to shift the tower up or down.
+        self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
         # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_FROST)
         self.fire_sound = None
 
@@ -154,7 +155,12 @@ class FrostSpire(Tower):
         # No damage, only slow
         target.speed = target.original_speed * FROST_SPIRE_SLOW_FACTOR
         target.slow_timer = FROST_SPIRE_SLOW_DURATION
-        target.image.fill(LIGHT_BLUE)
+        # Create a new surface with a semi-transparent blue overlay
+        tinted_image = target.original_image.copy()
+        tint_surface = pygame.Surface(tinted_image.get_size(), pygame.SRCALPHA)
+        tint_surface.fill((*LIGHT_BLUE, 128)) # 128 for 50% transparency
+        tinted_image.blit(tint_surface, (0,0))
+        target.image = tinted_image
         create_frost_effect(target.rect.centerx, target.rect.centery, particles)
         self.vfx_timer = 5 # Shorter beam duration
         self.target = target
@@ -172,9 +178,9 @@ class FrostSpire(Tower):
 class StormSpire(Tower):
     def __init__(self, pos):
         super().__init__(pos, STORM_SPIRE_COST, STORM_SPIRE_RANGE, STORM_SPIRE_DAMAGE, STORM_SPIRE_FIRE_RATE)
-        # self.image = pygame.image.load(assets.TOWER_STORM_SPIRE).convert_alpha()
-        self.image = assets.get_placeholder_surface(50, 50, PURPLE)
-        self.rect = self.image.get_rect(center=pos)
+        self.image = pygame.transform.scale(pygame.image.load(assets.TOWER_STORM_SPIRE).convert_alpha(), TOWER_SIZE)
+        # ADJUST TOWER PLACEMENT: Modify the 'y' value (pos[1]) to shift the tower up or down.
+        self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
         self.targets_hit = []
         # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
         self.fire_sound = None

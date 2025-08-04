@@ -23,14 +23,15 @@ UI_DIR = os.path.join(IMAGES_DIR, 'ui')
 # --- IMAGE ASSETS ---
 
 # Backgrounds
-BG_MAIN_MENU = os.path.join(IMAGES_DIR, 'bg_main_menu.png')
-BG_LEVEL_1 = os.path.join(IMAGES_DIR, 'bg_level_1.png')
-BG_LEVEL_2 = os.path.join(IMAGES_DIR, 'bg_level_2.png')
+BG_MAIN_MENU = os.path.join(IMAGES_DIR, 'Main_Menu_Background.png')
+GROUND_TILE = os.path.join(IMAGES_DIR, 'Ground.png')
+PATH_TILE = os.path.join(IMAGES_DIR, 'Path_Tile.png')
 
 # Towers
-TOWER_SUNFIRE_SPIRE = os.path.join(IMAGES_DIR, 'tower_sunfire_spire.png')
-TOWER_FROST_SPIRE = os.path.join(IMAGES_DIR, 'tower_frost_spire.png')
-TOWER_STORM_SPIRE = os.path.join(IMAGES_DIR, 'tower_storm_spire.png')
+TOWER_SUNFIRE_SPIRE = os.path.join(IMAGES_DIR, 'sunfire.png')
+TOWER_FROST_SPIRE = os.path.join(IMAGES_DIR, 'frostspire.png')
+TOWER_STORM_SPIRE = os.path.join(IMAGES_DIR, 'storm.png')
+TOWER_PLOT = os.path.join(IMAGES_DIR, 'Tower_Plot.png')
 
 # Enemies
 ENEMY_SHADOW_CRAWLER = os.path.join(IMAGES_DIR, 'enemy_shadow_crawler.png')
@@ -50,6 +51,8 @@ UI_BUTTON_START = os.path.join(UI_DIR, 'button_start.png')
 UI_HEART_ICON = os.path.join(UI_DIR, 'heart_icon.png')
 UI_GOLD_ICON = os.path.join(UI_DIR, 'gold_icon.png')
 UI_PAUSE_BUTTON = os.path.join(UI_DIR, 'pause_button.png')
+SPAWN_GATE_IMAGE = os.path.join(IMAGES_DIR, 'Heartcrystal_Castle.png')
+CASTLE_IMAGE = os.path.join(IMAGES_DIR, 'castle.png')
 UI_FAST_FORWARD_BUTTON = os.path.join(UI_DIR, 'fast_forward_button.png')
 UI_SETTINGS_BUTTON = os.path.join(UI_DIR, 'settings_button.png')
 CASTLE_IMAGE = os.path.join(IMAGES_DIR, 'castle.png')

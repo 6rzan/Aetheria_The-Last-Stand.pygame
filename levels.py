@@ -1,26 +1,28 @@
 import pygame
 from settings import *
+import assets
+import math
 
 LEVEL_1_MAP = {
-    "path": [(0, 100), (200, 100), (200, 300), (400, 300), (400, 100), (600, 100), (600, 400), (800, 400), (800, 200), (1000, 200), (1000, 500), (1280, 500)],
-    "initial_tower_spots": [(100, 200), (500, 250)],
-    "purchasable_tower_spots": [(300, 200), (700, 300), (900, 350)],
-    "barricade_spots": [(200, 150), (400, 250), (600, 200), (800, 300), (1000, 350)],
+    "path": [(0, 200), (350, 200), (350, 500), (650, 500), (650, 200), (950, 200), (950, 600), (1280, 600)],
+    "initial_tower_spots": [(200, 350), (800, 350)],
+    "purchasable_tower_spots": [(500, 350), (1100, 450)],
+    "barricade_spots": [(350, 280), (650, 430), (950, 280)],
     "background_colors": (GREEN, BROWN)
 }
 
 LEVEL_2_MAP = {
-    "path": [(0, 360), (150, 360), (150, 150), (400, 150), (400, 500), (700, 500), (700, 250), (1000, 250), (1000, 600), (1280, 600)],
-    "initial_tower_spots": [(100, 250), (550, 350)],
-    "purchasable_tower_spots": [(300, 300), (850, 400), (1100, 450)],
-    "barricade_spots": [(150, 250), (400, 300), (700, 400), (1000, 400)],
+    "path": [(0, 450), (300, 450), (300, 150), (600, 150), (600, 650), (900, 650), (900, 250), (1280, 250)],
+    "initial_tower_spots": [(450, 500), (1050, 500)],
+    "purchasable_tower_spots": [(450, 50), (750, 500), (1150, 500)],
+    "barricade_spots": [(300, 250), (600, 350), (900, 400), (1100, 450)],
     "background_colors": (DARK_BLUE, PURPLE)
 }
 
 LEVEL_3_MAP = {
-    "path": [(0, 50), (1280, 50)],
-    "initial_tower_spots": [(100, 150), (1180, 150)],
-    "purchasable_tower_spots": [(300, 150), (500, 150), (700, 150), (900, 150)],
+    "path": [(0, 250), (1280, 250)],
+    "initial_tower_spots": [(200, 450), (1080, 450)],
+    "purchasable_tower_spots": [(450, 450), (640, 450), (830, 450)],
     "barricade_spots": [],
     "background_colors": (BLACK, WHITE)
 }
@@ -55,11 +57,28 @@ class Level:
         self.background_colors = level_data["background_colors"]
         self.width = 1280 # Assuming fixed size for now
         self.height = 720
+        self.background_image = pygame.transform.scale(pygame.image.load(assets.GROUND_TILE).convert(), (self.width, self.height))
+        self.path_tile = pygame.transform.scale(pygame.image.load(assets.PATH_TILE).convert_alpha(), (PATH_WIDTH, PATH_WIDTH))
 
-    def draw(self, screen, offset):
-        # The background will be drawn by the main game loop now
-        # to handle centering.
+    def draw(self, surface, offset):
+        # The background is now drawn in the main game loop for responsive scaling
+
+        # Draw the colored path shape
         for i in range(len(self.path) - 1):
-            start_pos = (self.path[i][0] + offset[0], self.path[i][1] + offset[1])
-            end_pos = (self.path[i+1][0] + offset[0], self.path[i+1][1] + offset[1])
-            pygame.draw.line(screen, self.background_colors[1], start_pos, end_pos, 40)
+            start = pygame.math.Vector2(self.path[i])
+            end = pygame.math.Vector2(self.path[i+1])
+            pygame.draw.line(surface, self.background_colors[1], start + offset, end + offset, PATH_WIDTH + 20)
+
+        # Tile the path texture on top
+        for i in range(len(self.path) - 1):
+            start = pygame.math.Vector2(self.path[i])
+            end = pygame.math.Vector2(self.path[i+1])
+            
+            length = (end - start).length()
+            if length == 0: continue
+            direction = (end - start).normalize()
+            
+            for j in range(0, int(length), self.path_tile.get_width()):
+                pos = start + direction * j
+                tile_rect = self.path_tile.get_rect(center = pos + offset)
+                surface.blit(self.path_tile, tile_rect)

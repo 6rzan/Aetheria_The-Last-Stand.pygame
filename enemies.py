@@ -15,8 +15,9 @@ class Enemy(pygame.sprite.Sprite):
         self.path_index = 0
         self.pos = list(self.path[self.path_index])
         self.image = None # To be set by subclass
+        self.original_image = None
         self.original_color = None
-        self.rect = pygame.Rect(self.pos[0] - 15, self.pos[1] - 15, 30, 30)
+        self.rect = None # Will be created in subclass
         self.slow_timer = 0
         self.last_hit_by = None
         self.attack_timer = 0
@@ -56,7 +57,7 @@ class Enemy(pygame.sprite.Sprite):
             self.slow_timer -= 1
             if self.slow_timer == 0:
                 self.speed = self.original_speed
-                self.image.fill(self.original_color)
+                self.image = self.original_image.copy()
 
         if self.path_index < len(self.path) - 1:
             target = self.path[self.path_index + 1]
@@ -82,25 +83,25 @@ class Enemy(pygame.sprite.Sprite):
 class ShadowCrawler(Enemy):
     def __init__(self, path):
         super().__init__(SHADOW_CRAWLER_HEALTH, SHADOW_CRAWLER_SPEED, SHADOW_CRAWLER_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_SHADOW_CRAWLER).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, GREY)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHADOW_CRAWLER).convert_alpha(), SHADOW_CRAWLER_SIZE)
         self.original_color = GREY
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
 
 class ShadowFlyer(Enemy):
     def __init__(self, path):
         super().__init__(SHADOW_FLYER_HEALTH, SHADOW_FLYER_SPEED, SHADOW_FLYER_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_SHADOW_FLYER).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, WHITE)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHADOW_FLYER).convert_alpha(), SHADOW_FLYER_SIZE)
         self.original_color = WHITE
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
 
 class ShieldingSentinel(Enemy):
     def __init__(self, path):
         super().__init__(SHIELDING_SENTINEL_HEALTH, SHIELDING_SENTINEL_SPEED, SHIELDING_SENTINEL_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, DARK_BLUE)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL).convert_alpha(), SHIELDING_SENTINEL_SIZE)
         self.original_color = DARK_BLUE # For shield effect
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
         self.shield = SHIELDING_SENTINEL_SHIELD
         self.max_shield = SHIELDING_SENTINEL_SHIELD
@@ -136,9 +137,9 @@ class ShieldingSentinel(Enemy):
 class ChronoWarper(Enemy):
     def __init__(self, path):
         super().__init__(CHRONO_WARPER_HEALTH, CHRONO_WARPER_SPEED, CHRONO_WARPER_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_CHRONO_WARPER).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, PURPLE)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_CHRONO_WARPER).convert_alpha(), CHRONO_WARPER_SIZE)
         self.original_color = PURPLE
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
         self.pulse_timer = CHRONO_WARPER_PULSE_RATE
         self.pulse_vfx_timer = 0
@@ -161,9 +162,9 @@ class ChronoWarper(Enemy):
 class Saboteur(Enemy):
     def __init__(self, path):
         super().__init__(SABOTEUR_HEALTH, SABOTEUR_SPEED, SABOTEUR_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_SABOTEUR).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, BROWN)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_SABOTEUR).convert_alpha(), SABOTEUR_SIZE)
         self.original_color = BROWN
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
 
     def kill(self):
@@ -174,9 +175,9 @@ class Saboteur(Enemy):
 class Healer(Enemy):
     def __init__(self, path):
         super().__init__(HEALER_HEALTH, HEALER_SPEED, HEALER_VALUE, path)
-        # self.image = pygame.image.load(assets.ENEMY_HEALER).convert_alpha()
-        self.image = assets.get_placeholder_surface(30, 30, GREEN)
+        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_HEALER).convert_alpha(), HEALER_SIZE)
         self.original_color = GREEN
+        self.original_image = self.image.copy()
         self.rect = self.image.get_rect(center=self.pos)
         self.heal_timer = HEALER_PULSE_RATE
         self.heal_vfx_timer = 0

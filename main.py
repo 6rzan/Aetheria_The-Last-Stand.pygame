@@ -21,9 +21,9 @@ class Game:
         self.level = Level(LEVEL_1_MAP)
         self.wave_manager = WaveManager(self.level.path)
         # self.font = pygame.font.Font(assets.FONT_PRIMARY, 36)
-        self.font = pygame.font.Font(None, 36) # Fallback
-        # self.title_font = pygame.font.Font(assets.FONT_TITLE, 72)
-        self.title_font = pygame.font.Font(None, 72) # Fallback
+        self.font = pygame.font.Font(None, FONT_SIZE_NORMAL)
+        self.title_font = pygame.font.Font(None, FONT_SIZE_TITLE)
+        self.tooltip_font = pygame.font.Font(None, FONT_SIZE_TOOLTIP)
         
         # --- CURRENCY & PROGRESSION REFACTOR ---
         self.meta_currency = 500 # Default value
@@ -64,11 +64,11 @@ class Game:
         self.load_assets()
 
         self.shop_towers = [
-            {"name": "Sunfire Spire", "cost": SUNFIRE_SPIRE_COST, "type": "sunfire", "color": ORANGE, "damage": SUNFIRE_SPIRE_DAMAGE, "range": SUNFIRE_SPIRE_RANGE},
-            {"name": "Frost Spire", "cost": FROST_SPIRE_COST, "type": "frost", "color": LIGHT_BLUE, "damage": "Slows", "range": FROST_SPIRE_RANGE},
-            {"name": "Storm Spire", "cost": STORM_SPIRE_COST, "type": "storm", "color": PURPLE, "damage": STORM_SPIRE_DAMAGE, "range": STORM_SPIRE_RANGE},
+            {"name": "Sunfire Spire", "cost": SUNFIRE_SPIRE_COST, "type": "sunfire", "image": self.tower_images["sunfire"], "damage": SUNFIRE_SPIRE_DAMAGE, "range": SUNFIRE_SPIRE_RANGE},
+            {"name": "Frost Spire", "cost": FROST_SPIRE_COST, "type": "frost", "image": self.tower_images["frost"], "damage": "Slows", "range": FROST_SPIRE_RANGE},
+            {"name": "Storm Spire", "cost": STORM_SPIRE_COST, "type": "storm", "image": self.tower_images["storm"], "damage": STORM_SPIRE_DAMAGE, "range": STORM_SPIRE_RANGE},
             {"name": "Barricade", "cost": BARRICADE_COST, "type": "barricade", "color": BROWN, "damage": "Blocks", "range": "N/A"},
-            {"name": "Spire Plot", "cost": SPIRE_PLOT_COST, "type": "plot", "color": DARK_BLUE, "damage": "Build on it", "range": "N/A"},
+            {"name": "Spire Plot", "cost": SPIRE_PLOT_COST, "type": "plot", "image": self.tower_images["plot"], "damage": "Build on it", "range": "N/A"},
         ]
 
     def run(self):
@@ -151,7 +151,7 @@ class Game:
         self.check_win_loss()
 
     def draw(self):
-        self.screen.fill(BLACK)
+        self.screen.blit(pygame.transform.scale(self.level.background_image, self.screen.get_size()), (0,0))
 
         # --- Centered Map Drawing ---
         # Calculate the offset to center the map
@@ -173,8 +173,14 @@ class Game:
 
         # Draw Castle
         if self.level.path:
+            # Draw spawn gate
+            start_pos = self.level.path[0]
+            gate_rect = self.spawn_gate_image.get_rect(center=(start_pos[0] + offset_x, start_pos[1] + offset_y))
+            game_surface.blit(self.spawn_gate_image, gate_rect)
+
+            # Draw main castle
             end_pos = self.level.path[-1]
-            castle_rect = self.castle_image.get_rect(center=(end_pos[0] + offset_x, end_pos[1] + offset_y))
+            castle_rect = self.castle_image.get_rect(center=(end_pos[0] + offset_x, end_pos[1] + offset_y + CASTLE_Y_OFFSET))
             game_surface.blit(self.castle_image, castle_rect)
 
         for tower in self.towers:
@@ -194,34 +200,32 @@ class Game:
         self.draw_enemy_abilities()
 
     def draw_left_hud(self):
-        panel_width = 250
-        hud_panel = pygame.Surface((panel_width, self.screen.get_height()), pygame.SRCALPHA)
-        hud_panel.fill((20, 20, 20, 180)) # Semi-transparent dark panel
-        self.screen.blit(hud_panel, (0, 0))
+        # hud_panel = pygame.Surface((HUD_PANEL_WIDTH, self.screen.get_height()), pygame.SRCALPHA)
+        # hud_panel.fill((20, 20, 20, 180)) # Semi-transparent dark panel
+        # self.screen.blit(hud_panel, (0, 0))
 
         # Wave number
         wave_text = self.font.render(f"Wave: {self.wave_number} / {self.wave_manager.total_waves}", True, WHITE)
-        self.screen.blit(wave_text, (20, 20))
+        self.screen.blit(wave_text, (HUD_PADDING, HUD_PADDING))
 
         # Fast-forward button
-        ff_button_rect = pygame.Rect(20, self.screen.get_height() - 70, 100, 50)
+        ff_button_rect = pygame.Rect(HUD_PADDING, self.screen.get_height() - FF_BUTTON_Y_OFFSET, BUTTON_WIDTH, BUTTON_HEIGHT)
         pygame.draw.rect(self.screen, GREY, ff_button_rect, border_radius=5)
         ff_text = self.font.render(f"{self.game_speed}x", True, BLACK)
         self.screen.blit(ff_text, (ff_button_rect.centerx - ff_text.get_width() // 2, ff_button_rect.centery - ff_text.get_height() // 2))
 
-        # Health bar
-        health_bar_width = panel_width - 40
         # Settings button
-        settings_button_rect = pygame.Rect(20, self.screen.get_height() - 140, 100, 50)
+        settings_button_rect = pygame.Rect(HUD_PADDING, self.screen.get_height() - SETTINGS_BUTTON_Y_OFFSET, BUTTON_WIDTH, BUTTON_HEIGHT)
         pygame.draw.rect(self.screen, GREY, settings_button_rect, border_radius=5)
         settings_text = self.font.render("Settings", True, BLACK)
         self.screen.blit(settings_text, (settings_button_rect.centerx - settings_text.get_width() // 2, settings_button_rect.centery - settings_text.get_height() // 2))
-        health_bar_height = 30
-        health_pct = max(0, self.heartcrystal_health) / 100.0
-        current_health_width = int(health_bar_width * health_pct)
 
-        health_bar_rect = pygame.Rect(20, 70, health_bar_width, health_bar_height)
-        current_health_rect = pygame.Rect(20, 70, current_health_width, health_bar_height)
+        # Health bar
+        health_pct = max(0, self.heartcrystal_health) / 100.0
+        current_health_width = int(HEALTH_BAR_WIDTH * health_pct)
+
+        health_bar_rect = pygame.Rect(HUD_PADDING, HEALTH_BAR_Y, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
+        current_health_rect = pygame.Rect(HUD_PADDING, HEALTH_BAR_Y, current_health_width, HEALTH_BAR_HEIGHT)
 
         # Health bar gradient
         health_color = (int(255 * (1 - health_pct)), int(255 * health_pct), 0)
@@ -234,10 +238,9 @@ class Game:
 
 
     def draw_right_shop(self):
-        panel_width = 300
-        shop_panel = pygame.Surface((panel_width, self.screen.get_height()), pygame.SRCALPHA)
-        shop_panel.fill((20, 20, 20, 180))
-        self.screen.blit(shop_panel, (self.screen.get_width() - panel_width, 0))
+        # shop_panel = pygame.Surface((SHOP_PANEL_WIDTH, self.screen.get_height()), pygame.SRCALPHA)
+        # shop_panel.fill((20, 20, 20, 180))
+        # self.screen.blit(shop_panel, (self.screen.get_width() - SHOP_PANEL_WIDTH, 0))
 
         # --- Draw Selected Tower UI ---
         if self.selected_tower_instance:
@@ -245,7 +248,7 @@ class Game:
             
             # Tower Name
             name_text = self.font.render(f"{type(tower).__name__} (Lvl {tower.level})", True, WHITE)
-            self.screen.blit(name_text, (self.screen.get_width() - panel_width + 20, 20))
+            self.screen.blit(name_text, (self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, SHOP_PADDING))
 
             # Stats
             stats_y = 60
@@ -256,12 +259,12 @@ class Game:
             ]
             for i, stat in enumerate(stats):
                 stat_text = self.font.render(stat, True, WHITE)
-                self.screen.blit(stat_text, (self.screen.get_width() - panel_width + 20, stats_y + i * 30))
+                self.screen.blit(stat_text, (self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, stats_y + i * 30))
 
             # Upgrade Button
             upgrade_cost = tower.upgrade_cost
             can_afford_upgrade = self.meta_currency >= upgrade_cost
-            upgrade_button_rect = pygame.Rect(self.screen.get_width() - panel_width + 20, stats_y + 100, panel_width - 40, 50)
+            upgrade_button_rect = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, stats_y + 100, SHOP_PANEL_WIDTH - SHOP_PADDING * 2, BUTTON_HEIGHT)
             # Hover animation
             if upgrade_button_rect.collidepoint(pygame.mouse.get_pos()):
                 pulse = (math.sin(pygame.time.get_ticks() * 0.01) + 1) / 2
@@ -274,7 +277,7 @@ class Game:
 
             # Sell Button
             sell_value = int(tower.cost * 0.65)
-            sell_button_rect = pygame.Rect(self.screen.get_width() - panel_width + 20, stats_y + 160, panel_width - 40, 50)
+            sell_button_rect = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, stats_y + 160, SHOP_PANEL_WIDTH - SHOP_PADDING * 2, BUTTON_HEIGHT)
             # Hover animation
             if sell_button_rect.collidepoint(pygame.mouse.get_pos()):
                 pulse = (math.sin(pygame.time.get_ticks() * 0.01) + 1) / 2
@@ -296,14 +299,12 @@ class Game:
             perm_currency_text = self.font.render(f"Aetherium: {self.meta_currency}", True, perm_color)
             temp_currency_text = self.font.render(f"Shards: {self.volatile_currency}", True, temp_color)
             
-            self.screen.blit(perm_currency_text, (self.screen.get_width() - panel_width + 20, 20))
-            self.screen.blit(temp_currency_text, (self.screen.get_width() - panel_width + 20, 60))
+            self.screen.blit(perm_currency_text, (self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, SHOP_PADDING))
+            self.screen.blit(temp_currency_text, (self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, 60))
 
             # --- Draw Tower Cards ---
-            start_y = 120
-            card_height = 60
             for i, tower_data in enumerate(self.shop_towers):
-                card_rect = pygame.Rect(self.screen.get_width() - panel_width + 10, start_y + i * card_height, panel_width - 20, card_height - 10)
+                card_rect = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, SHOP_CARD_Y_START + i * SHOP_CARD_HEIGHT, SHOP_PANEL_WIDTH - SHOP_PADDING * 2, SHOP_CARD_HEIGHT - BUTTON_MARGIN)
                 
                 # Affordability
                 can_afford = self.meta_currency >= tower_data["cost"] if tower_data["type"] != "barricade" else self.volatile_currency >= tower_data["cost"]
@@ -319,8 +320,11 @@ class Game:
                 pygame.draw.rect(self.screen, bg_color, card_rect, border_radius=5)
                 pygame.draw.rect(self.screen, border_color, card_rect, 2, border_radius=5)
 
-                icon_rect = pygame.Rect(card_rect.left + 5, card_rect.top + 5, 40, 40)
-                pygame.draw.rect(self.screen, tower_data["color"], icon_rect, border_radius=5)
+                icon_rect = pygame.Rect(card_rect.left + 5, card_rect.top + 5, SHOP_CARD_ICON_SIZE[0], SHOP_CARD_ICON_SIZE[1])
+                if "image" in tower_data:
+                    self.screen.blit(pygame.transform.scale(tower_data["image"], SHOP_CARD_ICON_SIZE), icon_rect)
+                else: # Fallback for non-tower items
+                    pygame.draw.rect(self.screen, tower_data["color"], icon_rect, border_radius=5)
 
                 name_text = self.font.render(tower_data["name"], True, WHITE)
                 cost_text = self.font.render(str(tower_data["cost"]), True, WHITE if can_afford else RED)
@@ -336,19 +340,19 @@ class Game:
                     self.screen.blit(tooltip_surface, tooltip_rect)
 
             # --- Draw Abilities ---
-            overcharge_icon = pygame.Rect(self.screen.get_width() - panel_width + 20, self.screen.get_height() - 140, 50, 50)
+            overcharge_icon = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, self.screen.get_height() - OVERCHARGE_Y_OFFSET, ABILITY_ICON_SIZE[0], ABILITY_ICON_SIZE[1])
             pygame.draw.rect(self.screen, YELLOW, overcharge_icon)
             overcharge_text = self.font.render(f"Overcharge", True, BLACK)
-            self.screen.blit(overcharge_text, (self.screen.get_width() - panel_width + 80, self.screen.get_height() - 130))
+            self.screen.blit(overcharge_text, (overcharge_icon.right + BUTTON_MARGIN, overcharge_icon.top))
             overcharge_cost_text = self.font.render(f"Cost: {OVERCHARGE_COST}", True, BLACK if self.volatile_currency >= OVERCHARGE_COST else RED)
-            self.screen.blit(overcharge_cost_text, (self.screen.get_width() - panel_width + 80, self.screen.get_height() - 110))
+            self.screen.blit(overcharge_cost_text, (overcharge_icon.right + BUTTON_MARGIN, overcharge_icon.top + 20))
 
-            aoe_icon = pygame.Rect(self.screen.get_width() - panel_width + 20, self.screen.get_height() - 70, 50, 50)
+            aoe_icon = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, self.screen.get_height() - AOE_Y_OFFSET, ABILITY_ICON_SIZE[0], ABILITY_ICON_SIZE[1])
             pygame.draw.rect(self.screen, RED, aoe_icon)
             aoe_text = self.font.render(f"AOE Attack", True, BLACK)
-            self.screen.blit(aoe_text, (self.screen.get_width() - panel_width + 80, self.screen.get_height() - 60))
+            self.screen.blit(aoe_text, (aoe_icon.right + BUTTON_MARGIN, aoe_icon.top))
             aoe_cost_text = self.font.render(f"Cost: {AOE_ATTACK_COST}", True, BLACK if self.volatile_currency >= AOE_ATTACK_COST else RED)
-            self.screen.blit(aoe_cost_text, (self.screen.get_width() - panel_width + 80, self.screen.get_height() - 40))
+            self.screen.blit(aoe_cost_text, (aoe_icon.right + BUTTON_MARGIN, aoe_icon.top + 20))
 
             # --- Tooltips for Abilities ---
             mouse_pos = pygame.mouse.get_pos()
@@ -372,10 +376,17 @@ class Game:
 
     def draw_placement_grid(self):
         if self.placing_plot:
+            # Adjust for camera offset
+            map_width, map_height = self.level.width, self.level.height
+            offset_x = (self.screen.get_width() - map_width) // 2
+            offset_y = (self.screen.get_height() - map_height) // 2
+            
             for spot in self.level.purchasable_tower_spots:
                 is_occupied = any(p.rect.center == spot for p in self.spire_plots)
                 if not is_occupied:
-                    pygame.draw.circle(self.screen, (255, 255, 0, 100), spot, 25, 2)
+                    plot_image = self.tower_images["plot"].copy()
+                    plot_image.set_alpha(100)
+                    self.screen.blit(plot_image, (spot[0] - PLOT_SIZE[0] // 2 + offset_x, spot[1] - PLOT_SIZE[1] // 2 + offset_y))
 
     def draw_ghost_tower(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -387,9 +398,6 @@ class Game:
         map_pos = (mouse_pos[0] - offset_x, mouse_pos[1] - offset_y)
 
         if self.selected_tower:
-            spire_color_map = { "sunfire": ORANGE, "frost": LIGHT_BLUE, "storm": PURPLE }
-            base_color = spire_color_map.get(self.selected_tower, WHITE)
-            
             is_valid_spot = False
             for plot in self.spire_plots:
                 if not plot.is_occupied and plot.rect.collidepoint(map_pos):
@@ -398,12 +406,13 @@ class Game:
             
             pulse = (math.sin(pygame.time.get_ticks() * 0.005) + 1) / 2
             alpha = 75 + (pulse * 100)
-            ghost_image = pygame.Surface((50,50), pygame.SRCALPHA)
-            ghost_image.fill((base_color[0], base_color[1], base_color[2], alpha))
+            
+            ghost_image = self.tower_images[self.selected_tower].copy()
+            ghost_image.set_alpha(alpha)
             
             validity_color = GREEN if is_valid_spot else RED
-            pygame.draw.circle(self.screen, validity_color, mouse_pos, 30, 2)
-            self.screen.blit(ghost_image, (mouse_pos[0] - 25, mouse_pos[1] - 25))
+            pygame.draw.circle(self.screen, validity_color, mouse_pos, PLOT_SIZE[0] // 2, 2)
+            self.screen.blit(ghost_image, (mouse_pos[0] - TOWER_SIZE[0] // 2, mouse_pos[1] - TOWER_SIZE[1] // 2))
 
         elif self.placing_barricade:
             is_valid_spot = False
@@ -422,7 +431,7 @@ class Game:
         elif self.placing_plot:
             is_valid_spot = False
             for spot in self.level.purchasable_tower_spots:
-                if pygame.Rect(spot[0]-25, spot[1]-25, 50, 50).collidepoint(map_pos):
+                if pygame.Rect(spot[0]-PLOT_SIZE[0]//2, spot[1]-PLOT_SIZE[1]//2, PLOT_SIZE[0], PLOT_SIZE[1]).collidepoint(map_pos):
                     if not any(p.rect.center == spot for p in self.spire_plots):
                         is_valid_spot = True
                         break
@@ -484,8 +493,8 @@ class Game:
             self.ui_click_sound.play()
 
         # --- Abilities ---
-        overcharge_icon = pygame.Rect(self.screen.get_width() - panel_width + 20, self.screen.get_height() - 140, 50, 50)
-        aoe_icon = pygame.Rect(self.screen.get_width() - panel_width + 20, self.screen.get_height() - 70, 50, 50)
+        overcharge_icon = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, self.screen.get_height() - OVERCHARGE_Y_OFFSET, ABILITY_ICON_SIZE[0], ABILITY_ICON_SIZE[1])
+        aoe_icon = pygame.Rect(self.screen.get_width() - SHOP_PANEL_WIDTH + SHOP_PADDING, self.screen.get_height() - AOE_Y_OFFSET, ABILITY_ICON_SIZE[0], ABILITY_ICON_SIZE[1])
 
         if overcharge_icon.collidepoint(pos):
             if self.volatile_currency >= OVERCHARGE_COST:
@@ -558,7 +567,7 @@ class Game:
                         break
             elif self.placing_plot:
                 for spot in self.level.purchasable_tower_spots:
-                    if pygame.Rect(spot[0]-25, spot[1]-25, 50, 50).collidepoint(map_pos):
+                    if pygame.Rect(spot[0]-PLOT_SIZE[0]//2, spot[1]-PLOT_SIZE[1]//2, PLOT_SIZE[0], PLOT_SIZE[1]).collidepoint(map_pos):
                         if not any(p.rect.center == spot for p in self.spire_plots) and self.meta_currency >= SPIRE_PLOT_COST:
                             self.spire_plots.add(SpirePlot(spot)); self.meta_currency -= SPIRE_PLOT_COST
                             self.perm_fx_color = ORANGE; self.perm_currency_fx_timer = 15
@@ -683,7 +692,7 @@ class Game:
         self.placing_plot = state == "plot"
 
     def draw_tooltip(self, lines, pos):
-        font = pygame.font.Font(None, 24)
+        font = self.tooltip_font
         padding = 5
         
         # Find max width
@@ -706,8 +715,7 @@ class Game:
         self.screen.blit(tooltip_surface, tooltip_rect)
 
     def draw_main_menu(self):
-        # self.screen.blit(self.bg_main_menu, (0,0))
-        self.screen.fill(BLACK) # Placeholder
+        self.screen.blit(pygame.transform.scale(self.bg_main_menu, self.screen.get_size()), (0,0))
         title_text = self.title_font.render("Aetheria: The Last Stand", True, WHITE)
         currency_text = self.font.render(f"Aetherium: {self.meta_currency}", True, WHITE)
         start_text = self.font.render("Press SPACE to Select Level", True, WHITE)
@@ -754,10 +762,17 @@ class Game:
             self.meta_currency = 500 # Default value if no save exists
 
     def load_assets(self):
-        # self.bg_main_menu = pygame.image.load(assets.BG_MAIN_MENU).convert()
-        # self.bg_level_1 = pygame.image.load(assets.BG_LEVEL_1).convert()
-        # self.castle_image = pygame.image.load(assets.CASTLE_IMAGE).convert_alpha()
-        self.castle_image = assets.get_placeholder_surface(80, 80, (200, 200, 200)) # Placeholder
+        self.bg_main_menu = pygame.image.load(assets.BG_MAIN_MENU).convert()
+        self.castle_image = pygame.transform.scale(pygame.image.load(assets.CASTLE_IMAGE).convert_alpha(), CASTLE_SIZE)
+        self.spawn_gate_image = pygame.transform.scale(pygame.image.load(assets.SPAWN_GATE_IMAGE).convert_alpha(), SPAWN_GATE_SIZE)
+        
+        # Load tower images for shop and placement preview
+        self.tower_images = {
+            "sunfire": pygame.transform.scale(pygame.image.load(assets.TOWER_SUNFIRE_SPIRE).convert_alpha(), TOWER_SIZE),
+            "frost": pygame.transform.scale(pygame.image.load(assets.TOWER_FROST_SPIRE).convert_alpha(), TOWER_SIZE),
+            "storm": pygame.transform.scale(pygame.image.load(assets.TOWER_STORM_SPIRE).convert_alpha(), TOWER_SIZE),
+            "plot": pygame.transform.scale(pygame.image.load(assets.TOWER_PLOT).convert_alpha(), PLOT_SIZE),
+        }
 
         # self.ui_click_sound = pygame.mixer.Sound(assets.SFX_UI_CLICK)
         self.ui_click_sound = None
@@ -779,29 +794,34 @@ class Game:
         self.screen.blit(title_text, (self.screen.get_width() // 2 - title_text.get_width() // 2, 100))
 
         # Music Volume
+        # Music Volume
         music_text = self.font.render(f"Music Volume: {int(self.music_volume * 100)}%", True, WHITE)
-        self.screen.blit(music_text, (self.screen.get_width() // 2 - 150, 250))
-        music_up_button = pygame.Rect(self.screen.get_width() // 2 + 100, 250, 30, 30)
-        music_down_button = pygame.Rect(self.screen.get_width() // 2 + 50, 250, 30, 30)
+        music_text_rect = music_text.get_rect(center=(self.screen.get_width() // 2, SETTINGS_MUSIC_Y))
+        self.screen.blit(music_text, music_text_rect)
+        
+        music_up_button = pygame.Rect(music_text_rect.right + SETTINGS_BUTTON_SPACING, music_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+        music_down_button = pygame.Rect(music_text_rect.left - SETTINGS_BUTTON_SIZE[0] - SETTINGS_BUTTON_SPACING, music_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
         pygame.draw.rect(self.screen, GREY, music_up_button)
         pygame.draw.rect(self.screen, GREY, music_down_button)
 
         # SFX Volume
         sfx_text = self.font.render(f"SFX Volume: {int(self.sfx_volume * 100)}%", True, WHITE)
-        self.screen.blit(sfx_text, (self.screen.get_width() // 2 - 150, 300))
-        sfx_up_button = pygame.Rect(self.screen.get_width() // 2 + 100, 300, 30, 30)
-        sfx_down_button = pygame.Rect(self.screen.get_width() // 2 + 50, 300, 30, 30)
+        sfx_text_rect = sfx_text.get_rect(center=(self.screen.get_width() // 2, SETTINGS_SFX_Y))
+        self.screen.blit(sfx_text, sfx_text_rect)
+        
+        sfx_up_button = pygame.Rect(sfx_text_rect.right + SETTINGS_BUTTON_SPACING, sfx_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+        sfx_down_button = pygame.Rect(sfx_text_rect.left - SETTINGS_BUTTON_SIZE[0] - SETTINGS_BUTTON_SPACING, sfx_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
         pygame.draw.rect(self.screen, GREY, sfx_up_button)
         pygame.draw.rect(self.screen, GREY, sfx_down_button)
 
         # Back Button
-        back_button = pygame.Rect(self.screen.get_width() // 2 - 100, 400, 200, 50)
+        back_button = pygame.Rect(self.screen.get_width() // 2 - BUTTON_WIDTH, SETTINGS_BACK_BUTTON_Y, BUTTON_WIDTH * 2, BUTTON_HEIGHT)
         pygame.draw.rect(self.screen, GREY, back_button)
         back_text = self.font.render("Back", True, BLACK)
         self.screen.blit(back_text, (back_button.centerx - back_text.get_width() // 2, back_button.centery - back_text.get_height() // 2))
 
         # Level Select Button
-        level_select_button = pygame.Rect(self.screen.get_width() // 2 - 100, 470, 200, 50)
+        level_select_button = pygame.Rect(self.screen.get_width() // 2 - BUTTON_WIDTH, SETTINGS_LEVEL_SELECT_Y, BUTTON_WIDTH * 2, BUTTON_HEIGHT)
         pygame.draw.rect(self.screen, GREY, level_select_button)
         level_select_text = self.font.render("Level Select", True, BLACK)
         self.screen.blit(level_select_text, (level_select_button.centerx - level_select_text.get_width() // 2, level_select_button.centery - level_select_text.get_height() // 2))
@@ -814,29 +834,34 @@ class Game:
                 break
 
     def handle_settings_click(self, pos):
-        # Music Volume
-        music_up_button = pygame.Rect(self.screen.get_width() // 2 + 100, 250, 30, 30)
-        music_down_button = pygame.Rect(self.screen.get_width() // 2 + 50, 250, 30, 30)
+        # Recreate the rects here to ensure they match the drawing code
+        music_text = self.font.render(f"Music Volume: {int(self.music_volume * 100)}%", True, WHITE)
+        music_text_rect = music_text.get_rect(center=(self.screen.get_width() // 2, SETTINGS_MUSIC_Y))
+        music_up_button = pygame.Rect(music_text_rect.right + SETTINGS_BUTTON_SPACING, music_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+        music_down_button = pygame.Rect(music_text_rect.left - SETTINGS_BUTTON_SIZE[0] - SETTINGS_BUTTON_SPACING, music_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+
+        sfx_text = self.font.render(f"SFX Volume: {int(self.sfx_volume * 100)}%", True, WHITE)
+        sfx_text_rect = sfx_text.get_rect(center=(self.screen.get_width() // 2, SETTINGS_SFX_Y))
+        sfx_up_button = pygame.Rect(sfx_text_rect.right + SETTINGS_BUTTON_SPACING, sfx_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+        sfx_down_button = pygame.Rect(sfx_text_rect.left - SETTINGS_BUTTON_SIZE[0] - SETTINGS_BUTTON_SPACING, sfx_text_rect.centery - SETTINGS_BUTTON_SIZE[1] // 2, SETTINGS_BUTTON_SIZE[0], SETTINGS_BUTTON_SIZE[1])
+
         if music_up_button.collidepoint(pos):
             self.music_volume = min(1.0, self.music_volume + 0.1)
         elif music_down_button.collidepoint(pos):
             self.music_volume = max(0.0, self.music_volume - 0.1)
 
-        # SFX Volume
-        sfx_up_button = pygame.Rect(self.screen.get_width() // 2 + 100, 300, 30, 30)
-        sfx_down_button = pygame.Rect(self.screen.get_width() // 2 + 50, 300, 30, 30)
         if sfx_up_button.collidepoint(pos):
             self.sfx_volume = min(1.0, self.sfx_volume + 0.1)
         elif sfx_down_button.collidepoint(pos):
             self.sfx_volume = max(0.0, self.sfx_volume - 0.1)
 
         # Back Button
-        back_button = pygame.Rect(self.screen.get_width() // 2 - 100, 400, 200, 50)
+        back_button = pygame.Rect(self.screen.get_width() // 2 - BUTTON_WIDTH, SETTINGS_BACK_BUTTON_Y, BUTTON_WIDTH * 2, BUTTON_HEIGHT)
         if back_button.collidepoint(pos):
             self.game_state = "playing"
 
         # Level Select Button
-        level_select_button = pygame.Rect(self.screen.get_width() // 2 - 100, 470, 200, 50)
+        level_select_button = pygame.Rect(self.screen.get_width() // 2 - BUTTON_WIDTH, SETTINGS_LEVEL_SELECT_Y, BUTTON_WIDTH * 2, BUTTON_HEIGHT)
         if level_select_button.collidepoint(pos):
             self.game_state = "level_select"
 
