@@ -97,8 +97,7 @@ class SunfireSpire(Tower):
         # Negative values move it up, positive values move it down.
         self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
         self.locked_target = None
-        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_SUNFIRE)
-        self.fire_sound = None
+        self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_SUNFIRE)
 
     def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # Sunfire Spire specific update for target locking
@@ -128,7 +127,7 @@ class SunfireSpire(Tower):
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         if self.fire_sound:
             self.fire_sound.play()
-        target.take_damage(self.damage * damage_multiplier, self)
+        target.take_damage(self.damage * damage_multiplier, self, self.fire_sound)
         create_explosion(target.rect.centerx, target.rect.centery, particles)
         self.vfx_timer = 15 # Longer beam
         self.target = target
@@ -146,8 +145,7 @@ class FrostSpire(Tower):
         self.image = pygame.transform.scale(pygame.image.load(assets.TOWER_FROST_SPIRE).convert_alpha(), TOWER_SIZE)
         # ADJUST TOWER PLACEMENT: Modify the 'y' value (pos[1]) to shift the tower up or down.
         self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
-        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_FROST)
-        self.fire_sound = None
+        self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_FROST)
 
     def attack(self, target, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         if self.fire_sound:
@@ -182,8 +180,7 @@ class StormSpire(Tower):
         # ADJUST TOWER PLACEMENT: Modify the 'y' value (pos[1]) to shift the tower up or down.
         self.rect = self.image.get_rect(center=(pos[0], pos[1] + TOWER_Y_OFFSET))
         self.targets_hit = []
-        # self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
-        self.fire_sound = None
+        self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
 
     def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
         # VFX update
@@ -202,14 +199,17 @@ class StormSpire(Tower):
         self.vfx_timer = 15 # Lightning duration
         self.targets_hit.clear()
 
-        if self.fire_sound:
-            self.fire_sound.play()
-
-        # Find all targets in range and damage them
+        # Find all targets in range first
         for enemy in list(enemies):
             if enemy.alive() and math.hypot(self.rect.centerx - enemy.rect.centerx, self.rect.centery - enemy.rect.centery) < self.range:
-                enemy.take_damage(self.damage * damage_multiplier, self)
                 self.targets_hit.append(enemy)
+
+        # Only play sound and do damage if there are targets
+        if self.targets_hit:
+            if self.fire_sound:
+                self.fire_sound.play()
+            for enemy in self.targets_hit:
+                enemy.take_damage(self.damage * damage_multiplier, self, self.fire_sound)
                 create_storm_effect(enemy.rect.centerx, enemy.rect.centery, particles)
 
     def draw_vfx(self, surface, offset, overcharge_timer=0):

@@ -50,7 +50,10 @@ class Game:
         self.is_paused = False
         self.game_speed = 1
         self.music_volume = 1.0
-        self.sfx_volume = 1.0
+        self.sfx_volume = 0.4
+        self.ui_click_sound = None
+        self.enemy_hit_sound = None
+        self.enemy_death_sound = None
         self.setup_level()
         self.wave_took_damage = False
 
@@ -72,8 +75,8 @@ class Game:
         ]
 
     def run(self):
-        # pygame.mixer.music.load(assets.MUSIC_MAIN_MENU)
-        # pygame.mixer.music.play(-1) # Loop indefinitely
+        pygame.mixer.music.load(assets.MUSIC_MAIN_MENU)
+        pygame.mixer.music.play(-1) # Loop indefinitely
         running = True
         while running:
             for event in pygame.event.get():
@@ -110,7 +113,8 @@ class Game:
 
             if self.game_state == "playing":
                 if not self.is_paused:
-                    self.update()
+                    for _ in range(self.game_speed):
+                        self.update()
                 self.draw()
                 if self.is_paused:
                     self.draw_pause_menu()
@@ -126,7 +130,7 @@ class Game:
                 self.draw_settings_menu()
 
             pygame.display.flip()
-            self.clock.tick(FPS * self.game_speed)
+            self.clock.tick(FPS)
 
         pygame.quit()
         sys.exit()
@@ -482,10 +486,12 @@ class Game:
                 if self.ui_click_sound: self.ui_click_sound.play()
 
         else:
+            # Handle shop tower clicks
             for i, tower_data in enumerate(self.shop_towers):
                 card_rect = pygame.Rect(self.screen.get_width() - panel_width + 10, start_y + i * card_height, panel_width - 20, card_height - 10)
                 if card_rect.collidepoint(pos):
                     self.set_placing_state(tower_data["type"])
+                    if self.ui_click_sound: self.ui_click_sound.play()
                     clicked_ui = True
                     break
         
@@ -541,7 +547,7 @@ class Game:
                     create_aoe_explosion(map_pos[0], map_pos[1], self.particles)
                     for enemy in list(self.enemies):
                         if math.hypot(map_pos[0] - enemy.rect.centerx, map_pos[1] - enemy.rect.centery) < AOE_ATTACK_RADIUS:
-                            enemy.take_damage(AOE_ATTACK_DAMAGE, None)
+                            enemy.take_damage(AOE_ATTACK_DAMAGE, self.enemy_hit_sound)
                 self.set_placing_state(None)
             elif self.selected_tower:
                 for plot in self.spire_plots:
@@ -589,8 +595,8 @@ class Game:
                 self.temp_fx_color = GREEN
                 self.temp_currency_fx_timer = 15
                 create_dissolve_effect(enemy.rect.centerx, enemy.rect.centery, self.particles)
-                if enemy.death_sound:
-                    enemy.death_sound.play()
+                if self.enemy_death_sound:
+                    self.enemy_death_sound.play()
                 enemy.kill()
 
     def handle_enemy_abilities(self):
@@ -664,8 +670,8 @@ class Game:
     def reset_run(self, level_data):
         self.level = Level(level_data["map_data"])
         self.wave_manager = WaveManager(self.level.path)
-        # pygame.mixer.music.load(assets.MUSIC_LEVEL_1)
-        # pygame.mixer.music.play(-1)
+        pygame.mixer.music.load(assets.MUSIC_LEVEL_GENERIC)
+        pygame.mixer.music.play(-1)
         self.heartcrystal_health = 100
         self.volatile_currency = level_data["starting_volatile_currency"]
         self.wave_number = 0
@@ -724,6 +730,11 @@ class Game:
         self.screen.blit(currency_text, (self.screen.get_width() // 2 - currency_text.get_width() // 2, self.screen.get_height() // 2 - 50))
         self.screen.blit(start_text, (self.screen.get_width() // 2 - start_text.get_width() // 2, self.screen.get_height() // 2 + 50))
 
+        # Ensure main menu music is playing
+        if not pygame.mixer.music.get_busy() or pygame.mixer.music.get_pos() == -1:
+             pygame.mixer.music.load(assets.MUSIC_MAIN_MENU)
+             pygame.mixer.music.play(-1)
+
         # Armory Button (Placeholder)
         armory_button = pygame.Rect(self.screen.get_width() // 2 - 150, self.screen.get_height() // 2 + 120, 300, 50)
         pygame.draw.rect(self.screen, GREY, armory_button)
@@ -757,9 +768,9 @@ class Game:
         try:
             with open("savegame.json", "r") as f:
                 data = json.load(f)
-                self.meta_currency = data.get("meta_currency", 500)
+                self.meta_currency = 800
         except (FileNotFoundError, json.JSONDecodeError):
-            self.meta_currency = 500 # Default value if no save exists
+            self.meta_currency = 800 # Default value if no save exists
 
     def load_assets(self):
         self.bg_main_menu = pygame.image.load(assets.BG_MAIN_MENU).convert()
@@ -774,8 +785,19 @@ class Game:
             "plot": pygame.transform.scale(pygame.image.load(assets.TOWER_PLOT).convert_alpha(), PLOT_SIZE),
         }
 
-        # self.ui_click_sound = pygame.mixer.Sound(assets.SFX_UI_CLICK)
-        self.ui_click_sound = None
+        self.ui_click_sound = pygame.mixer.Sound(assets.SFX_UI_CLICK)
+        self.enemy_hit_sound = pygame.mixer.Sound(assets.SFX_ENEMY_HIT)
+        self.enemy_death_sound = pygame.mixer.Sound(assets.SFX_ENEMY_DEATH)
+        self.set_sfx_volume(self.sfx_volume) # Set initial volume
+
+    def set_sfx_volume(self, volume):
+        self.sfx_volume = volume
+        if self.ui_click_sound: self.ui_click_sound.set_volume(volume)
+        if self.enemy_hit_sound: self.enemy_hit_sound.set_volume(volume)
+        if self.enemy_death_sound: self.enemy_death_sound.set_volume(volume)
+        for tower in self.towers:
+            if tower.fire_sound:
+                tower.fire_sound.set_volume(volume)
 
     def toggle_pause(self):
         self.is_paused = not self.is_paused
@@ -847,13 +869,17 @@ class Game:
 
         if music_up_button.collidepoint(pos):
             self.music_volume = min(1.0, self.music_volume + 0.1)
+            pygame.mixer.music.set_volume(self.music_volume)
         elif music_down_button.collidepoint(pos):
             self.music_volume = max(0.0, self.music_volume - 0.1)
+            pygame.mixer.music.set_volume(self.music_volume)
 
         if sfx_up_button.collidepoint(pos):
             self.sfx_volume = min(1.0, self.sfx_volume + 0.1)
+            self.set_sfx_volume(self.sfx_volume)
         elif sfx_down_button.collidepoint(pos):
             self.sfx_volume = max(0.0, self.sfx_volume - 0.1)
+            self.set_sfx_volume(self.sfx_volume)
 
         # Back Button
         back_button = pygame.Rect(self.screen.get_width() // 2 - BUTTON_WIDTH, SETTINGS_BACK_BUTTON_Y, BUTTON_WIDTH * 2, BUTTON_HEIGHT)

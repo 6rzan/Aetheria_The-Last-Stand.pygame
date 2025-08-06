@@ -15,8 +15,8 @@ ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
 
 # --- DIRECTORY PATHS ---
 IMAGES_DIR = os.path.join(ASSETS_DIR, 'images')
-SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
-MUSIC_DIR = os.path.join(ASSETS_DIR, 'music')
+SOUNDS_DIR = os.path.join(ASSETS_DIR, 'Sfx')
+MUSIC_DIR = os.path.join(ASSETS_DIR, 'Sfx')
 FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 UI_DIR = os.path.join(IMAGES_DIR, 'ui')
 
@@ -37,6 +37,7 @@ TOWER_PLOT = os.path.join(IMAGES_DIR, 'Tower_Plot.png')
 ENEMY_SHADOW_CRAWLER = os.path.join(IMAGES_DIR, 'enemy_shadow_crawler.png')
 ENEMY_SHADOW_FLYER = os.path.join(IMAGES_DIR, 'enemy_shadow_flyer.png')
 ENEMY_SHIELDING_SENTINEL = os.path.join(IMAGES_DIR, 'enemy_shielding_sentinel.png')
+ENEMY_SHIELDING_SENTINEL_NO_SHIELD = os.path.join(IMAGES_DIR, 'enemy_shielding_sentinel_no_shield.png')
 ENEMY_CHRONO_WARPER = os.path.join(IMAGES_DIR, 'enemy_chrono_warper.png')
 ENEMY_SABOTEUR = os.path.join(IMAGES_DIR, 'enemy_saboteur.png')
 ENEMY_HEALER = os.path.join(IMAGES_DIR, 'enemy_healer.png')
@@ -68,7 +69,7 @@ SFX_UI_CLICK = os.path.join(SOUNDS_DIR, 'sfx_ui_click.wav')
 
 # --- MUSIC ---
 MUSIC_MAIN_MENU = os.path.join(MUSIC_DIR, 'music_main_menu.mp3')
-MUSIC_LEVEL_1 = os.path.join(MUSIC_DIR, 'music_level_1.mp3')
+MUSIC_LEVEL_GENERIC = os.path.join(MUSIC_DIR, 'Game_music.wav')
 
 # --- FONTS ---
 FONT_PRIMARY = os.path.join(FONTS_DIR, 'primary_font.ttf')

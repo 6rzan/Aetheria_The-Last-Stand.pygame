@@ -21,14 +21,10 @@ class Enemy(pygame.sprite.Sprite):
         self.slow_timer = 0
         self.last_hit_by = None
         self.attack_timer = 0
-        # self.hit_sound = pygame.mixer.Sound(assets.SFX_ENEMY_HIT)
-        self.hit_sound = None
-        # self.death_sound = pygame.mixer.Sound(assets.SFX_ENEMY_DEATH)
-        self.death_sound = None
 
-    def take_damage(self, amount, tower):
-        if self.hit_sound:
-            self.hit_sound.play()
+    def take_damage(self, amount, tower, hit_sound=None):
+        if hit_sound:
+            hit_sound.play()
         self.health -= amount
         self.last_hit_by = tower
 
@@ -72,12 +68,9 @@ class Enemy(pygame.sprite.Sprite):
                 self.path_index += 1
             self.rect.center = self.pos
         else:
-            # pygame.mixer.Sound('assets/heartcrystal_crack.wav').play()
             self.kill() # Reached the end of the path
     
     def kill(self):
-        if self.death_sound:
-            self.death_sound.play()
         super().kill()
 
 class ShadowCrawler(Enemy):
@@ -99,24 +92,30 @@ class ShadowFlyer(Enemy):
 class ShieldingSentinel(Enemy):
     def __init__(self, path):
         super().__init__(SHIELDING_SENTINEL_HEALTH, SHIELDING_SENTINEL_SPEED, SHIELDING_SENTINEL_VALUE, path)
-        self.image = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL).convert_alpha(), SHIELDING_SENTINEL_SIZE)
-        self.original_color = DARK_BLUE # For shield effect
-        self.original_image = self.image.copy()
+        self.image_shielded = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL).convert_alpha(), SHIELDING_SENTINEL_SIZE)
+        self.image_no_shield = pygame.transform.scale(pygame.image.load(assets.ENEMY_SHIELDING_SENTINEL_NO_SHIELD).convert_alpha(), SHIELDING_SENTINEL_SIZE)
+        self.original_image = self.image_shielded.copy()
+        self.image = self.image_shielded.copy()
         self.rect = self.image.get_rect(center=self.pos)
         self.shield = SHIELDING_SENTINEL_SHIELD
         self.max_shield = SHIELDING_SENTINEL_SHIELD
         self.shield_cooldown = 0
 
-    def take_damage(self, amount, tower):
+    def take_damage(self, amount, tower, hit_sound=None):
+        if hit_sound:
+            hit_sound.play()
         self.shield_cooldown = SHIELDING_SENTINEL_COOLDOWN
         if self.shield > 0:
             damage_to_shield = min(self.shield, amount)
             self.shield -= damage_to_shield
+            if self.shield <= 0:
+                self.image = self.image_no_shield.copy()
+                self.original_image = self.image_no_shield.copy()
             remaining_damage = amount - damage_to_shield
             if remaining_damage > 0:
-                super().take_damage(remaining_damage, tower)
+                super().take_damage(remaining_damage, tower, hit_sound=None) # Don't play sound twice
         else:
-            super().take_damage(amount, tower)
+            super().take_damage(amount, tower, hit_sound)
 
     def update(self, particles, barricades, all_enemies):
         super().update(particles, barricades, all_enemies)
@@ -124,15 +123,9 @@ class ShieldingSentinel(Enemy):
             self.shield_cooldown -= 1
         elif self.shield < self.max_shield:
             self.shield += 1 # Regenerate shield slowly
-
-        # Shield visual
-        if self.shield > 0:
-            shield_surface = pygame.Surface((self.rect.width + 6, self.rect.height + 6), pygame.SRCALPHA)
-            pygame.draw.rect(shield_surface, (0, 191, 255, 150), shield_surface.get_rect(), 3, border_radius=5)
-            self.image.blit(shield_surface, (-3, -3))
-        else:
-            # Redraw the base image in case the shield visual was blitted on top
-            self.image.fill(self.original_color)
+            if self.shield > 0:
+                self.image = self.image_shielded.copy()
+                self.original_image = self.image_shielded.copy()
 
 class ChronoWarper(Enemy):
     def __init__(self, path):
