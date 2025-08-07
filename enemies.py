@@ -2,7 +2,7 @@ import pygame
 import assets
 from settings import *
 from effects import create_dissolve_effect
-
+import math
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, health, speed, value, path):
         super().__init__()
