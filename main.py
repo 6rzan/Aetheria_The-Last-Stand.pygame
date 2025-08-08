@@ -603,10 +603,14 @@ class Game:
         for enemy in self.enemies:
             if isinstance(enemy, ChronoWarper) and enemy.can_pulse():
                 enemy.reset_pulse_timer()
-                for tower in self.towers:
-                    dist = math.hypot(enemy.rect.centerx - tower.rect.centerx, enemy.rect.centery - tower.rect.centery)
-                    if dist < CHRONO_WARPER_PULSE_RADIUS:
-                        tower.slow_effect_timer = CHRONO_WARPER_SLOW_DURATION
+                # Instead of slowing towers, it should speed up nearby enemies
+                for other_enemy in self.enemies:
+                    if other_enemy is not enemy and other_enemy.alive():
+                        dist = math.hypot(enemy.rect.centerx - other_enemy.rect.centerx, enemy.rect.centery - other_enemy.rect.centery)
+                        if dist < CHRONO_WARPER_PULSE_RADIUS:
+                            other_enemy.speed = other_enemy.original_speed * CHRONO_WARPER_SPEED_FACTOR
+                            # We need a timer on the enemy to reset the speed
+                            other_enemy.speed_boost_timer = CHRONO_WARPER_SPEED_DURATION
 
     def draw_enemy_abilities(self):
         for enemy in self.enemies:

@@ -100,6 +100,11 @@ class SunfireSpire(Tower):
         self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_SUNFIRE)
 
     def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        # Handle disable effect
+        if self.disable_timer > 0:
+            self.disable_timer -= 1
+            return # Do not attack if disabled
+
         # Sunfire Spire specific update for target locking
         if self.vfx_timer > 0:
             self.vfx_timer -= 1
@@ -183,6 +188,11 @@ class StormSpire(Tower):
         self.fire_sound = pygame.mixer.Sound(assets.SFX_TOWER_FIRE_STORM)
 
     def update(self, enemies, projectiles, particles, screen, damage_multiplier=1.0):
+        # Handle disable effect
+        if self.disable_timer > 0:
+            self.disable_timer -= 1
+            return # Do not attack if disabled
+            
         # VFX update
         if self.vfx_timer > 0:
             self.vfx_timer -= 1

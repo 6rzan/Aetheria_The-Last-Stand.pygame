@@ -21,6 +21,7 @@ class Enemy(pygame.sprite.Sprite):
         self.slow_timer = 0
         self.last_hit_by = None
         self.attack_timer = 0
+        self.speed_boost_timer = 0
 
     def take_damage(self, amount, tower, hit_sound=None):
         if hit_sound:
@@ -35,8 +36,8 @@ class Enemy(pygame.sprite.Sprite):
         blocking_barricade = None
         for barricade in barricades:
             # Check a point slightly ahead of the enemy
-            look_ahead_pos = (self.pos[0] + (self.rect.width / 2), self.pos[1])
-            if barricade.rect.collidepoint(look_ahead_pos):
+            # Simplified and more robust collision check
+            if self.rect.colliderect(barricade.rect):
                 blocking_barricade = barricade
                 break
         
@@ -48,6 +49,12 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.attack_timer -= 1
             return # Don't move
+
+        # Handle speed boost
+        if self.speed_boost_timer > 0:
+            self.speed_boost_timer -= 1
+            if self.speed_boost_timer == 0:
+                self.speed = self.original_speed
 
         if self.slow_timer > 0:
             self.slow_timer -= 1
@@ -180,6 +187,7 @@ class Healer(Enemy):
         if self.heal_timer > 0:
             self.heal_timer -= 1
         else:
+            # This was the bug. It should call heal_pulse and then reset the timer.
             self.heal_pulse(all_enemies)
             self.heal_timer = HEALER_PULSE_RATE
             self.heal_vfx_timer = FPS // 2
