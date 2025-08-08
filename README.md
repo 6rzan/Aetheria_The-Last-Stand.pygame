@@ -27,3 +27,7 @@ The objective of "Aetheria: The Last Stand" is to defend the Heartcrystal from w
 ## Controls
 
 *   **Mouse Click:** Select and place towers.
+
+## Release Notes
+
+For a detailed breakdown of the current features, recent updates, and the project's history, please see the [Release Notes](release_notes.md).

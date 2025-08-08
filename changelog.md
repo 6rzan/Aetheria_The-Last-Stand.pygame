@@ -78,3 +78,43 @@ This update addressed extensive user feedback on visual consistency, asset integ
 - **Spire Plot Reusability:** Fixed a critical bug preventing players from building on a plot after selling a tower.
 - **Placement Previews:** Resolved a major bug where placement previews used incorrect coordinates, making placement impossible on some levels.
 - **Asset Scaling:** Corrected the scale of all tower and plot images to fit their designated areas.
+
+## [Version 1.1] - Gameplay Depth and Strategic Diversity
+
+This update significantly expands the strategic options available to the player by introducing new tactical abilities, enemy types with unique mechanics, and a more dynamic in-game economy.
+
+### Added
+- **New Enemy Archetypes:**
+  - **Chrono Warper:** A disruptive enemy that emits a temporal pulse, slowing the attack speed of all nearby towers.
+  - **Saboteur:** Upon death, this enemy disables the tower that delivered the final blow for a short duration.
+- **New Player Abilities (Volatile Currency):**
+  - **Barricades:** Place temporary, high-health obstacles on the path to stall enemies.
+  - **Aetheric Burst:** A powerful, player-activated AOE damage ability.
+  - **Overcharge:** Temporarily doubles the damage of all towers.
+- **New Tower Mechanics:**
+  - **Sunfire Spire:** Now locks onto a single target until it's destroyed or moves out of range.
+  - **Storm Spire:** Now attacks all enemies within its range simultaneously with chain lightning VFX.
+- **New Structures:**
+  - **Spire Plots:** Players can now purchase and place new tower plots on designated map locations using permanent currency.
+- **Enhanced UI & Feedback:**
+  - Added detailed tooltips for all abilities in the shop, showing cost, duration, and effects.
+  - Implemented visual feedback for currency gains and expenditures.
+  - Added visual effects for the Chrono Warper's pulse and the Healer's pulse.
+
+### Changed
+- **Tower Targeting:**
+  - Frost Spire no longer deals damage and exclusively applies a slowing effect.
+- **Economy:**
+  - Rebalanced costs for all towers, abilities, and plots to fit the new dual-currency system.
+- **Settings:**
+  - The settings menu is now accessible from the main menu and in-game.
+  - Added a "Level Select" button to the settings menu for easier navigation.
+
+### Fixed
+- **Save/Load:** Corrected an issue where the game would not load the correct amount of meta currency.
+- **UI:** Fixed various minor UI bugs related to button alignment and text rendering.
+
+## [Phase 4] - Documentation
+
+### Added
+- **Release Notes:** Created `release_notes.md` to provide players with a comprehensive overview of the game's features, progress, and recent changes.
